@@ -284,7 +284,9 @@ async function handleLogin() {
     localStorage.setItem('authToken', authToken);
     localStorage.setItem('username', currentUsername);
     localStorage.setItem('userRole', data.role);
-    localStorage.setItem('userRole', data.church || data.role);
+    if (data.church) {
+      localStorage.setItem('userChurch', data.church);
+    }
 
     showSuccess('Login successful! Redirecting...');
     
@@ -349,7 +351,9 @@ async function handleSignup() {
     localStorage.setItem('authToken', authToken);
     localStorage.setItem('username', currentUsername);
     localStorage.setItem('userRole', data.role);
-    localStorage.setItem('userRole', data.church || data.role);
+    if (data.church) {
+      localStorage.setItem('userChurch', data.church);
+    }
 
     showSuccess('Account created successfully! Redirecting...');
     
