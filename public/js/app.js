@@ -11,7 +11,26 @@ let purchasedHints = {}; // Track which hints have been purchased: { questionId:
 const timeLimit = 30; // 30 seconds per question
 
 // Initialize - Removed, now handled by game.js for proper auth check
+async function checkPermissions() {
+    const token = localStorage.getItem("authToken");
 
+    if (!token) {
+        showNoAccess();
+        return;
+    }
+
+    const res = await fetch("/api/check-permission", {
+        headers: { Authorization: token }
+    });
+
+    const data = await res.json();
+
+    if (data.allowed) {
+        loadAdminPage();
+    } else {
+        loadGamePage();
+    }
+}
 function showError(message, containerId) {
   const container = document.getElementById(containerId);
   if (container) {
@@ -425,4 +444,11 @@ window.addEventListener('load', () => {
       currentUsername = null;
     });
   }
+});
+app.get("/api/check-permission", verifyToken, (req, res) => {
+    res.json({
+        allowed: true,
+        username: req.username,
+        role: req.userRole
+    });
 });

@@ -98,9 +98,18 @@
     "password": "$2a$10$nRNgaxIkZ2.ZkW.55CbjiOe3HHopjohgfJJ9OhfXCgbtI6mWP8IhC",
     "stats": "591866e1025ecd4e40ea1ca1eec20b42:154564791996b479eb5e1183ca7584cdbaf006091c5df355ecf1eca76561644747d0d1c65c598fd6fd41f7ee3bd192d911e25c843f1e55955714400306720a96fcc01b631218d357caba9efc9d11201e7e0d409b0605ff73ebfe06dac4812dab713e90a73facb529dcc1fef51b32f4fb07499da866ccfc53d88d9a3e2f91c9619d6deba659b1a666c0eac1e8fe3924b1f8702d2db7973188d928059be4d7b5fd660d9c91bf6156586af41b34aed495fa72597a56f286fec4c16d4c94ba2429b5",
     "createdAt": "2025-12-05T01:01:03.931Z",
-    "role": "system-admin",
+    "role": "admin",
     "church": "Aic Kitanga",
     "username": "mutinda",
     "phoneNumber": "+254748012336"
+  },
+  "its maestro": {
+    "password": "$2a$10$Xbik4PerLSJ6azAjnwbvIOZhyf/6jcj4OlM08mWAoXLcfaUEZCG32",
+    "stats": "c37546ec65d11943b7c003d34ab010e9:2a62726799053423b46f54d316ffe7e7c93655678219c67adef0b4de2cdba7f92e09f92ea7929b400515d120732e078a697c0d60b4657a62c547304c4e9d3c61d6845ee9e14b2ccd7f9c0a1462d7e708ade5e9a80539bd5617984242d1e3316e9509af21538fc403ef4bdceeadee80085862174df6544d64e1342fd939658102cbf2fcd91093d78c659a9f578e66cdb4d8a87d24ff84219fdd3be37c9a09bbd45fa8d4c816a023f0c3e3e65cb30de8e2983b827c5f529c99421e7d149e9794f2",
+    "createdAt": "2025-12-13T04:31:36.419Z",
+    "role": "secretary",
+    "church": "Aic Kitanga",
+    "username": "its maestro",
+    "phoneNumber": null
   }
 }

@@ -30,7 +30,7 @@ Developer: dennie-softs
 ```
 
 ### Step 4: Open in Browser
-Navigate to: **http://localhost:3000**
+Navigate to: **http://localhost:5000**
 
 ## Demo Accounts to Test
 
@@ -206,4 +206,4 @@ Stats decrypted look like:
 
 ---
 
-**Ready to play? Run `npm start` and visit http://localhost:3000!**
+**Ready to play? Run `npm start` and visit http://localhost:5000!**

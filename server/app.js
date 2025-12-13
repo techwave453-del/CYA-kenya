@@ -145,14 +145,14 @@ function cleanupUsersAndValidateAdmin() {
     });
 
     // Ensure only one system admin exists
-   // if (systemAdminCount > 1) {
-      //Object.keys(users).forEach((username, index) => {
-       // if (users[username].role === ROLES.SYSTEM_ADMIN && index !== 0) {
-          //users[username].role = ROLES.ADMIN;
-          //console.log(`Demoted ${username} from system-admin to admin (only one system admin allowed)`);
-        //}
-     // });
-   // }
+    if (systemAdminCount > 1) {
+      Object.keys(users).forEach((username, index) => {
+        if (users[username].role === ROLES.SYSTEM_ADMIN && index !== 0) {
+          users[username].role = ROLES.ADMIN;
+          console.log(`Demoted ${username} from system-admin to admin (only one system admin allowed)`);
+        }
+      });
+    }
 
     if (deletedCount > 0 || systemAdminCount > 1) {
       saveUsers(users);
@@ -2825,6 +2825,25 @@ io.on('connection', (socket) => {
     }
     console.log('User disconnected:', socket.id);
   });
+});
+
+app.get("/api/check-permission", (req, res) => {
+    const token = req.headers.authorization;
+
+    if (!token) return res.status(401).json({ allowed: false });
+
+    try {
+        const decoded = jwt.verify(token, "your_secret_key_here");
+
+        if (decoded.role === "admin" || decoded.role === "system-admin" || decoded.role === "moderator") {
+            return res.json({ allowed: true, role: decoded.role });
+        }
+
+        return res.status(403).json({ allowed: false });
+
+    } catch (err) {
+        return res.status(401).json({ allowed: false });
+    }
 });
 
 // FINAL START

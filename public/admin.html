@@ -1073,9 +1073,7 @@
                                 <option value="jesus">Jesus & Gospels</option>
                                 <option value="apostles">Apostles & Early Church</option>
                                 <option value="kings">Kings & Rulers</option>
-                                <option value
-                                
-                                ="prophets">Prophets</option>
+                                <option value="prophets">Prophets</option>
                                 <option value="parables">Parables</option>
                                 <option value="miracles">Miracles</option>
                             </select>
@@ -1305,7 +1303,7 @@
         </div>
     </div>
 
-    <script defer>
+    <script>
         let authToken = null;
         let currentUsername = null;
         let userRole = null;
@@ -1336,27 +1334,6 @@
                 return;
             }
             
-            // Verify token and get fresh role from server
-            try {
-                const verifyResponse = await fetch('/api/verify-token', {
-                    headers: { 'Authorization': `Bearer ${authToken}` }
-                });
-                
-                if (verifyResponse.ok) {
-                    const verifyData = await verifyResponse.json();
-                    if (verifyData.role) {
-                        userRole = verifyData.role;
-                        localStorage.setItem('userRole', verifyData.role);
-                    }
-                } else if (verifyResponse.status === 401) {
-                    localStorage.clear();
-                    window.location.href = 'login.html?sessionExpired=true';
-                    return;
-                }
-            } catch (e) {
-                console.log('Token verification failed, using cached role');
-            }
-            
             // Check if user has admin access
             const adminRoles = ['system-admin', 'admin', 'moderator'];
             if (!adminRoles.includes(userRole)) {
@@ -1365,35 +1342,24 @@
                 return;
             }
             
-            try {
-                // Setup UI
-                document.getElementById('adminUsername').textContent = currentUsername;
-                document.getElementById('adminRole').textContent = roleNames[userRole] || userRole;
-                document.getElementById('userDisplay').textContent = `${currentUsername}`;
-                document.getElementById('userDisplayMobile').textContent = `${currentUsername}`;
-                document.getElementById('navMiddle').style.display = 'flex';
-                document.getElementById('mobileMenuBtn').style.display = 'flex';
-                
-                // Setup tabs based on role
-                setupTabs();
-                
-                // Hide loading state and show admin content immediately
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('adminContent').style.display = 'block';
-                
-                // Load data in background (don't wait for them)
-                console.log('Admin panel loaded, loading data...');
-                loadCodeRequests().catch(err => console.error('Error loading code requests:', err));
-                loadCodes().catch(err => console.error('Error loading codes:', err));
-                loadUsers().catch(err => console.error('Error loading users:', err));
-                loadPasswordResets().catch(err => console.error('Error loading password resets:', err));
-                loadStats().catch(err => console.error('Error loading stats:', err));
-                
-            } catch (error) {
-                console.error('Error in checkAuth:', error);
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('adminContent').style.display = 'block';
-            }
+            // Setup UI
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminUsername').textContent = currentUsername;
+            document.getElementById('adminRole').textContent = roleNames[userRole] || userRole;
+            document.getElementById('userDisplay').textContent = `${currentUsername}`;
+            document.getElementById('userDisplayMobile').textContent = `${currentUsername}`;
+            document.getElementById('navMiddle').style.display = 'flex';
+            document.getElementById('mobileMenuBtn').style.display = 'flex';
+            
+            // Setup tabs based on role
+            setupTabs();
+            
+            // Load initial data
+            loadCodeRequests();
+            loadCodes();
+            loadUsers();
+            loadStats();
         }
         
         function setupTabs() {
@@ -1442,35 +1408,24 @@
                 });
                 
                 if (!response.ok) {
-                    console.error('Failed to load code requests:', response.status);
-                    throw new Error(`Failed to load code requests (${response.status})`);
+                    throw new Error('Failed to load code requests');
                 }
                 
                 const data = await response.json();
                 renderCodeRequests(data.requests);
             } catch (error) {
                 console.error('Error loading code requests:', error);
-                if (document.getElementById('requestsTableBody')) {
-                    document.getElementById('requestsTableBody').innerHTML = '<tr><td colspan="6">Error loading requests</td></tr>';
-                }
-            }
-        }
-
-        async function loadStats() {
-            try {
-                // Stats are loaded along with users and codes data
-                // Just ensure the stats display elements exist
-                if (!document.getElementById('totalUsers')) {
-                    console.warn('Stats display elements not found');
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
+                document.getElementById('requestsTableBody').innerHTML = '<tr><td colspan="6">Error loading requests</td></tr>';
             }
         }
         
         function renderCodeRequests(requests) {
             const tbody = document.getElementById('requestsTableBody');
-            if (!tbody) return;
+            
+            if (!requests || requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No code requests</td></tr>';
+                return;
+            }
             
             const pendingRequests = requests.filter(r => r.status === 'pending');
             const approvedRequests = requests.filter(r => r.status === 'approved');
@@ -1497,7 +1452,7 @@
             }
             
             if (approvedRequests.length > 0) {
-                html += '<tr style="background: #d4edda;"><td colspan="6" style="font-weight: bold; padding: 10px;">Approved Requests (Codes Generated)</td></tr>';
+                html += '<tr style="background: #d4edda;"><td colspan="6" style="font-weight: bold; padding: 10px;">✓ Approved Requests (Codes Generated)</td></tr>';
                 html += approvedRequests.map(req => `
                     <tr style="opacity: ${req.auto ? '0.85' : '1'}; background: #f0f8ff;">
                         <td>${req.name}</td>
@@ -1534,7 +1489,7 @@
                                     onmouseover="this.style.background='#0052a3'"
                                     onmouseout="this.style.background='#0066cc'"
                                 >Copy</button>
-                                <span style="font-size: 11px; color: #666; background: #e8f4f8; padding: 2px 6px; border-radius: 3px; white-space: nowrap;">${req.auto ? 'Auto' : 'Manual'}</span>
+                                <span style="font-size: 11px; color: #666; background: #e8f4f8; padding: 2px 6px; border-radius: 3px; white-space: nowrap;">${req.auto ? '🤖 Auto' : '👤 Manual'}</span>
                             </div>
                         </td>
                         <td style="font-size: 12px; color: #666;">${new Date(req.approvedAt).toLocaleDateString()}</td>
@@ -1543,10 +1498,6 @@
                         </td>
                     </tr>
                 `).join('');
-            }
-            
-            if (html === '') {
-                html = '<tr><td colspan="6">No code requests found</td></tr>';
             }
             
             tbody.innerHTML = html;
@@ -1730,14 +1681,11 @@
                 });
                 
                 if (!response.ok) {
-                    console.error('Failed to load codes:', response.status);
                     if (response.status === 403) {
-                        if (document.getElementById('codesTableBody')) {
-                            document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="5">Access denied</td></tr>';
-                        }
+                        document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="5">Access denied</td></tr>';
                         return;
                     }
-                    throw new Error(`Failed to load codes (${response.status})`);
+                    throw new Error('Failed to load codes');
                 }
                 
                 const data = await response.json();
@@ -1746,12 +1694,8 @@
                 // Update stats
                 const activeCodes = data.codes.filter(c => !c.used).length;
                 const usedCodes = data.codes.filter(c => c.used).length;
-                if (document.getElementById('activeCodes')) {
-                    document.getElementById('activeCodes').textContent = activeCodes;
-                }
-                if (document.getElementById('usedCodes')) {
-                    document.getElementById('usedCodes').textContent = usedCodes;
-                }
+                document.getElementById('activeCodes').textContent = activeCodes;
+                document.getElementById('usedCodes').textContent = usedCodes;
             } catch (error) {
                 console.error('Error loading codes:', error);
             }
@@ -1862,30 +1806,23 @@
                 });
                 
                 if (!response.ok) {
-                    console.error('Failed to load users:', response.status);
                     if (response.status === 403) {
-                        if (document.getElementById('usersTableBody')) {
-                            document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6">Access denied</td></tr>';
-                        }
+                        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="6">Access denied</td></tr>';
                         return;
                     }
-                    throw new Error(`Failed to load users (${response.status})`);
+                    throw new Error('Failed to load users');
                 }
                 
                 const data = await response.json();
                 renderUsers(data.users);
                 
                 // Update stats
-                if (document.getElementById('totalUsers')) {
-                    document.getElementById('totalUsers').textContent = data.users.length;
-                }
-                if (document.getElementById('totalGames')) {
-                    const totalGames = data.users.reduce((sum, u) => sum + (u.gamesPlayed || 0), 0);
-                    document.getElementById('totalGames').textContent = totalGames;
-                }
+                document.getElementById('totalUsers').textContent = data.users.length;
+                const totalGames = data.users.reduce((sum, u) => sum + (u.gamesPlayed || 0), 0);
+                document.getElementById('totalGames').textContent = totalGames;
                 
                 // Load password resets
-                await loadPasswordResets();
+                loadPasswordResets();
             } catch (error) {
                 console.error('Error loading users:', error);
             }
@@ -2172,7 +2109,6 @@
                     <td>${user.gamesPlayed || 0}</td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-admin info" onclick="openChangeRoleModal('${user.username}', '${user.role}')">👤 Role</button>
                             <button class="btn-admin warning" onclick="adjustBalance('${user.username}', 'add')">+Balance</button>
                             <button class="btn-admin warning" onclick="adjustBalance('${user.username}', 'deduct')">-Balance</button>
                             <button class="btn-admin primary" onclick="resetStats('${user.username}')">Reset</button>
@@ -2638,165 +2574,7 @@
             localStorage.removeItem('userRole');
             window.location.href = 'landing.html';
         }
-
-        const roleNames = {
-            'system-admin': 'System Admin',
-            'admin': 'Admin',
-            'moderator': 'Moderator',
-            'chairperson': 'Chairperson',
-            'vice-chair': 'Vice Chairperson',
-            'secretary': 'Secretary',
-            'organizing-secretary': 'Organizing Secretary',
-            'treasurer': 'Treasurer',
-            'general': 'General Member'
-        };
-
-        const availableRoles = [
-            { value: 'system-admin', label: 'System Admin' },
-            { value: 'admin', label: 'Admin' },
-            { value: 'moderator', label: 'Moderator' },
-            { value: 'chairperson', label: 'Chairperson' },
-            { value: 'vice-chair', label: 'Vice Chairperson' },
-            { value: 'secretary', label: 'Secretary' },
-            { value: 'organizing-secretary', label: 'Organizing Secretary' },
-            { value: 'treasurer', label: 'Treasurer' },
-            { value: 'general', label: 'General Member' }
-        ];
-
-        function openChangeRoleModal(username, currentRole) {
-            document.getElementById('changeRoleUsername').textContent = username;
-            const select = document.getElementById('changeRoleSelect');
-            
-            // Check if there's already a system admin (and this user isn't them)
-            const usersList = document.querySelectorAll('#usersTableBody tr');
-            let hasSystemAdmin = false;
-            let currentUsername = null;
-            
-            usersList.forEach(row => {
-                const userCell = row.querySelector('td:nth-child(1)')?.textContent;
-                const roleCell = row.querySelector('td:nth-child(2)')?.textContent;
-                if (roleCell && roleCell.includes('System Admin')) {
-                    hasSystemAdmin = true;
-                }
-            });
-            
-            // Disable system-admin option if one already exists and this isn't the system admin
-            const systemAdminOption = select.querySelector('option[value="system-admin"]');
-            if (hasSystemAdmin && currentRole !== 'system-admin') {
-                systemAdminOption.disabled = true;
-                systemAdminOption.textContent = 'System Admin (Only one allowed)';
-            } else {
-                systemAdminOption.disabled = false;
-                systemAdminOption.textContent = 'System Admin';
-            }
-            
-            // If this is the system admin, disable other options to prevent removal
-            Array.from(select.options).forEach(option => {
-                if (currentRole === 'system-admin') {
-                    option.disabled = option.value !== 'system-admin';
-                } else {
-                    option.disabled = false;
-                }
-            });
-            
-            select.value = currentRole;
-            document.getElementById('changeRoleModal').style.display = 'flex';
-        }
-
-        function closeChangeRoleModal() {
-            document.getElementById('changeRoleModal').style.display = 'none';
-        }
-
-        async function saveChangeRole() {
-            const username = document.getElementById('changeRoleUsername').textContent;
-            const newRole = document.getElementById('changeRoleSelect').value;
-            
-            if (!newRole) {
-                showMessage('usersMessage', 'Please select a role', 'error');
-                return;
-            }
-
-            // Check if trying to assign system-admin
-            if (newRole === 'system-admin') {
-                const usersList = document.querySelectorAll('#usersTableBody tr');
-                let hasSystemAdmin = false;
-                usersList.forEach(row => {
-                    const roleCell = row.querySelector('td:nth-child(2)')?.textContent;
-                    if (roleCell && roleCell.includes('System Admin')) {
-                        hasSystemAdmin = true;
-                    }
-                });
-                
-                if (hasSystemAdmin) {
-                    showMessage('usersMessage', '❌ Cannot assign system admin role. Only one system admin is allowed in the system.', 'error');
-                    return;
-                }
-            }
-
-            try {
-                const response = await fetch(`/api/admin/users/${username}/role`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ role: newRole })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to change role');
-                }
-
-                showMessage('usersMessage', `✓ Role changed for ${username} to ${roleNames[newRole]}`, 'success');
-                closeChangeRoleModal();
-                loadUsers();
-            } catch (error) {
-                showMessage('usersMessage', error.message, 'error');
-            }
-        }
-
-        // Close modal when clicking outside
-        document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('changeRoleModal');
-            if (modal) {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        closeChangeRoleModal();
-                    }
-                });
-            }
-        });
     </script>
     <script src="js/session.js"></script>
-
-    <!-- Change Role Modal -->
-    <div id="changeRoleModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-            <h2 style="margin-top: 0; color: #1a365d;">Change User Role</h2>
-            <p style="color: #666; margin: 10px 0;">User: <strong id="changeRoleUsername"></strong></p>
-            
-            <div style="margin: 20px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Select New Role:</label>
-                <select id="changeRoleSelect" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-                    <option value="system-admin">System Admin</option>
-                    <option value="admin">Admin</option>
-                    <option value="moderator">Moderator</option>
-                    <option value="chairperson">Chairperson</option>
-                    <option value="vice-chair">Vice Chairperson</option>
-                    <option value="secretary">Secretary</option>
-                    <option value="organizing-secretary">Organizing Secretary</option>
-                    <option value="treasurer">Treasurer</option>
-                    <option value="general">General Member</option>
-                </select>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button onclick="saveChangeRole()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Save Role</button>
-                <button onclick="closeChangeRoleModal()" style="flex: 1; padding: 12px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

@@ -8,14 +8,14 @@
   },
   "SA2025": {
     "role": "system-admin",
-    "used": true,
+    "used": false,
     "createdAt": "2025-12-01T10:30:00.000Z",
     "createdBy": "system",
     "usedAt": "2025-12-05T01:01:03.507Z"
   },
   "SA99": {
     "role": "system-admin",
-    "used": true,
+    "used": false,
     "createdAt": "2025-12-01T00:00:00.000Z",
     "createdBy": "system",
     "usedAt": "2025-12-01T06:49:54.849Z"
@@ -32,20 +32,6 @@
     "createdAt": "2025-11-30T03:05:00.000Z",
     "createdBy": "system"
   },
-  "U9FK24EU": {
-    "role": "general",
-    "used": true,
-    "createdAt": "2025-11-30T04:16:25.864Z",
-    "createdBy": "Mutinda",
-    "usedAt": "2025-11-30T04:18:35.630Z"
-  },
-  "IUYOKBJD": {
-    "role": "general",
-    "used": true,
-    "createdAt": "2025-11-30T10:40:30.065Z",
-    "createdBy": "Mutinda",
-    "usedAt": "2025-11-30T10:41:59.975Z"
-  },
   "MULTI": {
     "role": "general",
     "used": false,
@@ -55,122 +41,19 @@
     "createdBy": "system",
     "lastUsedAt": "2025-12-05T00:59:21.294Z"
   },
-  "6VS8LL9R": {
-    "role": "moderator",
-    "used": true,
-    "createdAt": "2025-11-30T14:04:43.808Z",
-    "createdBy": "Mutinda",
-    "usedAt": "2025-11-30T14:09:36.060Z"
-  },
-  "M69KISSD": {
+  "UEEJAW1T": {
     "role": "general",
     "used": false,
-    "multiUse": true,
-    "usageCount": 3,
-    "createdAt": "2025-12-01T17:52:20.967Z",
+    "multiUse": false,
+    "usageCount": 0,
+    "createdAt": "2025-12-12T18:06:15.750Z",
+    "createdBy": "deno"
+  },
+  "Z7QZ5PR6": {
+    "role": "secretary",
+    "used": true,
+    "createdAt": "2025-12-13T04:29:19.577Z",
     "createdBy": "deno",
-    "lastUsedAt": "2025-12-02T04:47:04.910Z"
-  },
-  "Z5FGARN5": {
-    "role": "general",
-    "used": true,
-    "createdAt": "2025-12-01T18:25:12.546Z",
-    "createdBy": "system",
-    "requestedBy": "0799209171",
-    "usedAt": "2025-12-01T19:16:17.480Z"
-  },
-  "SAJLAIK3": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-01T18:25:12.549Z",
-    "createdBy": "system",
-    "requestedBy": "0799209171"
-  },
-  "8TR6Q1MC": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-01T18:34:27.400Z",
-    "createdBy": "deno"
-  },
-  "GBBP117B": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-01T18:55:18.290Z",
-    "createdBy": "system",
-    "requestedBy": "0712345685"
-  },
-  "HXFYJEUA": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T04:24:03.173Z",
-    "createdBy": "system",
-    "requestedBy": "790764560"
-  },
-  "IPYLSB0Z": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T04:24:03.176Z",
-    "createdBy": "system",
-    "requestedBy": "0790764560"
-  },
-  "U5KMMBQC": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T04:26:05.244Z",
-    "createdBy": "deno"
-  },
-  "UF35TTNI": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T04:40:29.445Z",
-    "createdBy": "deno"
-  },
-  "MUAYF7DI": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T04:44:03.739Z",
-    "createdBy": "system",
-    "requestedBy": "0115584211"
-  },
-  "1IMTMODQ": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T05:19:04.844Z",
-    "createdBy": "deno"
-  },
-  "X2LCRJFC": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T05:28:31.233Z",
-    "createdBy": "system",
-    "requestedBy": "0794988287"
-  },
-  "XC35SOPG": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T05:28:31.233Z",
-    "createdBy": "system",
-    "requestedBy": "0739472780"
-  },
-  "HNX0DF5N": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T05:44:57.446Z",
-    "createdBy": "system",
-    "requestedBy": "0794988287"
-  },
-  "HK5148OM": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T17:58:57.350Z",
-    "createdBy": "system",
-    "requestedBy": "0748012336"
-  },
-  "M838EFSD": {
-    "role": "general",
-    "used": false,
-    "createdAt": "2025-12-02T19:21:05.227Z",
-    "createdBy": "system",
-    "requestedBy": "0112691326"
+    "usedAt": "2025-12-13T04:31:35.899Z"
   }
 }

@@ -135,7 +135,7 @@ npm start
 ```
 
 ### Step 4: Open Browser
-Navigate to: **http://localhost:3000**
+Navigate to: **http://localhost:5000**
 
 ---
 
@@ -194,7 +194,7 @@ Frontend:       HTML5 + CSS3 + JavaScript
 Authentication: JWT + bcryptjs
 Encryption:     AES-256-CBC (Node.js crypto)
 Database:       JSON + Encryption
-Hosting:        Localhost (http://localhost:3000)
+Hosting:        Localhost (http://localhost:5000)
 ```
 
 ---

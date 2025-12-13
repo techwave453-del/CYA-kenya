@@ -1,8 +1,8 @@
 let authToken = '';
 let currentUsername = '';
-let userChurch = '';
+let userRole = '';
 
-const memberChurchs = {
+const memberRoles = {
     'system-admin': 'System Administrator',
     'admin': 'Administrator',
     'moderator': 'Game Moderator',
@@ -166,6 +166,6 @@ function togglePasswordVisibility(fieldId) {
 function logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('username');
-    localStorage.removeItem('userChurch');
+    localStorage.removeItem('userRole');
     window.location.href = 'landing.html';
 }

@@ -70,7 +70,7 @@ npm start
 
 4. **Open in browser:**
 ```
-http://localhost:3000
+http://localhost:5000
 ```
 
 ## API Endpoints
@@ -170,7 +170,7 @@ users.json
 ## Configuration
 
 **Server Settings (server/app.js)**
-- PORT: 3000
+- PORT: 5000
 - SECRET_KEY: 'dennie-softs-secure-key-2025'
 - ENCRYPTION_KEY: Derived from secure salt
 
