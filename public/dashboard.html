@@ -58,19 +58,12 @@
         <div id="dashboardContainer" class="dashboard-container">
             <!-- Sidebar -->
             <aside class="sidebar">
-                <button class="panel-close-btn" onclick="closePanels()" aria-label="Close Quick Links">×</button>
+                <button class="panel-close-btn" onclick="closePanels()" aria-label="Close Sidebar">×</button>
                 <div class="sidebar-section">
                     <h3>Member Role</h3>
                     <div id="memberChurch" class="member-role-badge">Loading...</div>
                 </div>
-                <div class="sidebar-section">
-                    <h3>Quick Links</h3>
-                    <ul class="sidebar-menu">
-                        <li><a href="game.html" class="tab-link">🎮 Play Games</a></li>
-                        <li><a href="leaderboard.html" class="tab-link">🏆 Leaderboard</a></li>
-                        <li><a href="#" class="tab-link" onclick="scrollToChat(); return false;">💬 Chat</a></li>
-                    </ul>
-                </div>
+                <!-- Quick Links removed: functionality merged into Quick Access on the right -->
             </aside>
 
             <!-- Main Content -->
@@ -254,7 +247,13 @@
                 <button class="panel-close-btn" onclick="closePanels()" aria-label="Close Quick Access">×</button>
                 <div class="sidebar-section">
                     <h3>⚡ Quick Access</h3>
-                    <a href="game.html" class="quick-btn">Play Bible Trivia</a>
+                    <div class="quick-access-grid">
+                        <a href="game.html" class="quick-btn">🎮 Play Bible Trivia</a>
+                        <a href="games.html" class="quick-btn">🕹️ Play Games</a>
+                        <a href="leaderboard.html" class="quick-btn">🏆 Leaderboard</a>
+                        <a href="#" class="quick-btn" onclick="scrollToChat(); return false;">💬 Open Chat</a>
+                        <a href="profile.html" class="quick-btn">👤 Profile</a>
+                    </div>
                 </div>
                 <div class="sidebar-section">
                     <h3>👥 Members Online</h3>
@@ -270,7 +269,6 @@
     <div id="notificationContainer" class="notification-container"></div>
 
     <!-- Mobile quick toggles -->
-    <button id="quickLinksToggle" class="mobile-quick-toggle" onclick="toggleQuickLinks()" title="Quick Links">🔗</button>
     <button id="quickAccessToggle" class="mobile-quick-toggle quick-access-toggle" onclick="toggleQuickAccess()" title="Quick Access">⚡</button>
 
     <!-- Styled Confirmation Modal -->

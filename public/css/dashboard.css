@@ -863,7 +863,7 @@
 /* Make panels behave as overlay popups on all viewports when opened */
 .sidebar.panel-open {
     position: fixed;
-    top: 80px;
+    top: 70px;
     left: 20px;
     bottom: 20px;
     width: 280px;
@@ -889,14 +889,14 @@
     top: 80px;
     right: 20px;
     bottom: 20px;
-    width: 280px;
-    max-width: 34%;
+    width: 360px;
+    max-width: 42%;
     transform: translateX(0);
     transition: transform 0.22s ease;
     z-index: 10000;
     box-shadow: 0 12px 36px rgba(0,0,0,0.36);
     display: block !important;
-    background: rgba(255,255,255,0.88);
+    background: rgba(255,255,255,0.96);
     border-radius: 10px;
     overflow-y: auto;
 }
@@ -918,6 +918,27 @@
     color: #374151;
     cursor: pointer;
     z-index: 10001;
+}
+
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+}
+.quick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    background: linear-gradient(90deg, #ffb347, #ffcc33);
+    color: #111827;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+.quick-btn:hover { transform: translateY(-2px); }
 }
 .panel-close-btn:hover { color: #111827; }
 
@@ -974,6 +995,63 @@
     /* Reduce main content padding to keep space */
     .main-content { padding-bottom: 80px; }
 }
+
+/* Mobile tweaks: avoid overlapping fixed controls and improve small-screen layout */
+@media (max-width: 480px) {
+    /* Move quick toggles to the right to avoid conflict with other left controls */
+    .mobile-quick-toggle { left: auto; right: 22px; }
+    .mobile-quick-toggle.quick-access-toggle { right: 22px; bottom: 86px; }
+
+    /* Narrower right-sidebar on very small screens when shown as slide-over */
+    .right-sidebar {
+        width: 92% !important;
+        max-width: 360px !important;
+        right: 0 !important;
+    }
+
+    /* Make quick access buttons stack in one column on very narrow devices */
+    @media (max-width: 360px) {
+        .quick-access-grid { grid-template-columns: 1fr; gap: 8px; }
+        .quick-btn { padding: 12px; font-size: 0.95rem; }
+    }
+
+    /* Smooth body scroll lock: preserve layout width when locking scroll */
+    .no-scroll {
+        position: fixed;
+        width: 100%;
+        overflow: hidden;
+    }
+}
+
+/* Ensure body background is white to avoid visual flicker behind panels */
+body { background: #ffffff; }
+
+/* Additional small-screen refinements */
+@media (max-width: 480px) {
+    /* Stack fixed controls on the right to avoid overlap */
+    .chat-toggle-btn { right: 22px; bottom: 22px; }
+    .mobile-quick-toggle { right: 22px; }
+    /* Ensure quick access toggle sits above chat toggle */
+    .mobile-quick-toggle.quick-access-toggle { bottom: 86px; }
+
+    /* Larger hit area for panel close button */
+    .panel-close-btn {
+        padding: 8px 10px;
+        right: 12px;
+        top: 8px;
+        font-size: 22px;
+    }
+
+    /* Make toast notifications adapt to narrow screens */
+    .notification-container { right: 8px; left: 8px; top: 80px; }
+    .toast { min-width: auto; max-width: 90vw; }
+}
+
+@media (max-width: 360px) {
+    .quick-access-grid { grid-template-columns: 1fr; gap: 8px; }
+    .quick-btn { padding: 12px; font-size: 0.95rem; }
+}
+
 
 /* Prevent background scroll when panel open */
 .no-scroll {

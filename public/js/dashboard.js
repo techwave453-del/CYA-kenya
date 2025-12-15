@@ -1911,21 +1911,7 @@ function closePanels() {
     document.body.classList.remove('panel-open-active');
 }
 
-function toggleQuickLinks() {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
-    const opened = sidebar.classList.toggle('panel-open');
-    const b = ensureBackdrop();
-    if (opened) {
-        b.classList.add('visible');
-        document.body.classList.add('no-scroll');
-        document.body.classList.add('panel-open-active');
-    } else {
-        b.classList.remove('visible');
-        document.body.classList.remove('no-scroll');
-        document.body.classList.remove('panel-open-active');
-    }
-}
+// Quick Links feature removed; quick actions consolidated into Quick Access.
 
 function toggleQuickAccess() {
     const panel = document.querySelector('.right-sidebar');
