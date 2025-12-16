@@ -824,6 +824,7 @@
     
     .main-content {
         padding: 15px;
+        padding-bottom: 100px; /* Add bottom padding to avoid overlap with fixed toggle buttons */
         border-radius: 8px;
     }
     
@@ -1113,7 +1114,7 @@
 @media (max-width: 480px) {
     /* Move quick toggles to the right to avoid conflict with other left controls */
     .mobile-quick-toggle { left: auto; right: 22px; }
-    .mobile-quick-toggle.quick-access-toggle { right: 22px; bottom: 86px; }
+    .mobile-quick-toggle.quick-access-toggle { left: 22px; bottom: 22px; }
 
     /* Narrower right-sidebar on very small screens when shown as slide-over */
     .right-sidebar {

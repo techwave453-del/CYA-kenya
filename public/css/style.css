@@ -17,7 +17,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 15px 30px;
-    background: transparent;
+    background: rgba(26, 54, 93, 0.95);
     transition: all 0.3s ease;
 }
 
@@ -221,7 +221,8 @@ body.dashboard-page .container {
 /* Remove body padding for dashboard to use full viewport width */
 body.dashboard-page {
   padding: 0;
-  background: white !important;
+  background: url("../assets/images/background.gif") no-repeat center center fixed !important;
+  background-size: cover !important;
 }
 
 /* Top Navigation - Game Page */

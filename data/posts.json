@@ -6,7 +6,20 @@
     "content": "Nice view",
     "caption": "",
     "image": "/assets/images/post_1765860950494_tut0dc.jpeg",
-    "comments": [],
+    "comments": [
+      {
+        "id": "1765862997534",
+        "author": "deno",
+        "text": "This is nice",
+        "createdAt": "2025-12-16T05:29:57.534Z"
+      },
+      {
+        "id": "1765863016504",
+        "author": "deno",
+        "text": "Yea absolutely",
+        "createdAt": "2025-12-16T05:30:16.504Z"
+      }
+    ],
     "likes": 0,
     "loves": 0,
     "likedBy": [],
