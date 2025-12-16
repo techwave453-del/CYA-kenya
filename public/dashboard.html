@@ -68,109 +68,37 @@
 
             <!-- Main Content -->
             <main class="main-content main-responsive">
-                <!-- Memory Verse Display -->
-                <div id="memoryVerseWidget" class="memory-verse-widget">
-                    <div class="verse-title">✝️ Today's Memory Verse</div>
-                    <div id="memoryVerseText" class="verse-text">Loading...</div>
-                    <div id="memoryVerseReference" class="verse-reference">Bible</div>
-                </div>
-
-                <!-- Announcements Section -->
-                <div class="announcements-wrapper">
-                    <div class="section-header">
-                        <h2>📢 Announcements</h2>
-                        <button class="btn btn-sm" id="newAnnouncementBtn" onclick="showAnnouncementForm()">+ New</button>
-                    </div>
-                    <div class="new-announcement-form hidden" id="newAnnouncementForm">
-                        <input type="text" id="announcementTitle" placeholder="Announcement title" class="form-input">
-                        <textarea id="announcementContent" placeholder="Announcement content..." class="post-textarea event-textarea"></textarea>
-                        <input type="date" id="announcementDate" class="form-input">
-                        <div class="form-actions">
-                            <button class="btn btn-primary btn-sm" onclick="saveAnnouncement()">Save Announcement</button>
-                            <button class="btn btn-secondary btn-sm" onclick="cancelAnnouncement()">Cancel</button>
-                        </div>
-                    </div>
-                    <div class="announcements-list" id="announcementsList">
-                        <div class="empty-state">No announcements yet</div>
-                    </div>
-                </div>
-
-                <!-- Floating Chat Widget -->
-                <div id="floatingChat" class="floating-chat" style="display: none;">
-                    <div class="floating-chat-header" id="chatDragHandle">
-                        <div class="chat-title-bar">
-                            <h3>💬 Group Chat</h3>
-                            <span class="chat-info-badge">7 days retention</span>
-                        </div>
-                        <div class="chat-controls">
-                            <button class="chat-control-btn clear-btn" id="clearChatBtn" onclick="clearAllMessages()" title="Clear all messages" style="display: none;">🗑️</button>
-                            <button class="chat-control-btn minimize-btn" id="minimizeBtn" onclick="minimizeChat()" title="Minimize">−</button>
-                            <button class="chat-control-btn maximize-btn hidden" id="maximizeBtn" onclick="maximizeChat()" title="Maximize">□</button>
-                            <button class="chat-control-btn close-btn" onclick="closeChat()" title="Close">×</button>
-                        </div>
-                    </div>
-                    <div class="floating-chat-body">
-                        <div class="online-users-section">
-                            <div class="online-users-label">🟢 Online Users</div>
-                            <div class="online-users-scroll" id="onlineUsersList">
-                                <div class="online-user-item">
-                                    <span class="online-status"></span>
-                                    <span class="online-user-name">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="chat-container floating-chat-styled">
-                            <div class="chat-messages" id="chatMessages">
-                                <div class="empty-state">
-                                    <span class="empty-icon">💬</span>
-                                    <p>Start the conversation!</p>
-                                    <p class="empty-subtitle">Be the first to send a message to the group.</p>
-                                </div>
-                            </div>
-                            <div id="typingIndicator" class="typing-indicator hidden">
-                                <span id="typingUsers"></span>
-                                <span class="typing-dots"><span></span><span></span><span></span></span>
-                            </div>
-                            <div id="replyIndicator" class="reply-indicator hidden">
-                                <div class="reply-label">↩️ Replying to: <span id="replyUsername">username</span></div>
-                                <button class="reply-close" onclick="cancelReply()">×</button>
-                            </div>
-                            <div class="chat-input-area">
-                                <div class="chat-input-wrapper">
-                                    <button class="emoji-picker-btn" onclick="toggleEmojiPicker()" title="Add emoji">😊</button>
-                                    <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" maxlength="500" onkeypress="handleChatKeyPress(event)">
-                                    <span class="chat-char-count" id="chatCharCount">0/500</span>
-                                </div>
-                                <button id="chatSendBtn" class="btn btn-chat-send" onclick="sendChatMessage()">
-                                    <span>Send</span>
-                                </button>
-                            </div>
-                            <div id="emojiPicker" class="emoji-picker hidden">
-                                <div class="emoji-grid">
-                                    😊 😂 ❤️ 😍 🔥 👍 😎 😢 😡 😱 👏 🎉 🙏 😌 😴 😒 💯 ✨ 🌟 ⭐ 🎊 💪 🤔 🤷 😅 😘 😚 😙 🤐 😶
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="floating-chat-resize" id="chatResizeHandle"></div>
-                </div>
-                
-                <!-- Chat Toggle Button -->
-                <button id="chatToggleBtn" class="chat-toggle-btn" onclick="toggleChat()" title="Open Chat">
-                    💬
-                    <span id="chatUnreadBadge" class="chat-unread-badge" style="display: none;">0</span>
-                </button>
-
                 <!-- Tabs Section for other content -->
                 <div class="tabs-section">
+                    <!-- Posts Section -->
+                    <section id="posts" class="content-section active">
+                        <div class="section-header">
+                            <h2>📝 Ideas & Posts</h2>
+                            <button class="btn btn-sm" id="newPostBtn">+ Share Idea</button>
+                        </div>
+                        <div class="new-post-form hidden" id="newPostForm">
+                            <textarea id="postContent" placeholder="Share your idea or thought..." class="post-textarea"></textarea>
+                            <input type="text" id="postCaption" placeholder="Optional caption for image..." class="form-input" />
+                            <input type="file" id="postImage" accept="image/*" />
+                            <input type="hidden" id="postEditId">
+                            <div class="post-actions">
+                                <button class="btn btn-primary btn-sm" id="postSubmitBtn" onclick="createPost()">Post</button>
+                                <button class="btn btn-secondary btn-sm" onclick="cancelPost()">Cancel</button>
+                            </div>
+                        </div>
+                        <div class="posts-list" id="postsList">
+                            <div class="empty-state">No posts yet. Be the first to share!</div>
+                        </div>
+                    </section>
+
                     <div class="tabs-header">
-                        <button class="tab-btn active" data-tab="tasks" onclick="switchTab('tasks', this)">📋 Tasks</button>
+                        <button class="tab-btn active" data-tab="posts" onclick="switchTab('posts', this)">📝 Posts</button>
+                        <button class="tab-btn" data-tab="tasks" onclick="switchTab('tasks', this)">📋 Tasks</button>
                         <button class="tab-btn" data-tab="activities" onclick="switchTab('activities', this)">🎯 Activities</button>
-                        <button class="tab-btn" data-tab="posts" onclick="switchTab('posts', this)">📝 Posts</button>
                     </div>
 
                     <!-- Tasks Section -->
-                    <section id="tasks" class="content-section active">
+                    <section id="tasks" class="content-section">
                         <div class="section-header">
                             <h2>📋 Tasks & Responsibilities</h2>
                             <button class="btn btn-sm" onclick="showTaskForm()">+ New Task</button>
@@ -218,27 +146,6 @@
                             <div class="empty-state">No activities scheduled</div>
                         </div>
                     </section>
-
-                    <!-- Posts Section -->
-                    <section id="posts" class="content-section">
-                        <div class="section-header">
-                            <h2>📝 Ideas & Posts</h2>
-                            <button class="btn btn-sm" id="newPostBtn">+ Share Idea</button>
-                        </div>
-                        <div class="new-post-form hidden" id="newPostForm">
-                            <textarea id="postContent" placeholder="Share your idea or thought..." class="post-textarea"></textarea>
-                            <input type="text" id="postCaption" placeholder="Optional caption for image..." class="form-input" />
-                            <input type="file" id="postImage" accept="image/*" />
-                            <input type="hidden" id="postEditId">
-                            <div class="post-actions">
-                                <button class="btn btn-primary btn-sm" id="postSubmitBtn" onclick="createPost()">Post</button>
-                                <button class="btn btn-secondary btn-sm" onclick="cancelPost()">Cancel</button>
-                            </div>
-                        </div>
-                        <div class="posts-list" id="postsList">
-                            <div class="empty-state">No posts yet. Be the first to share!</div>
-                        </div>
-                    </section>
                 </div>
             </main>
 
@@ -264,6 +171,113 @@
             </aside>
         </div>
     </div>
+
+    <!-- Floating Chat Widget -->
+    <div id="floatingChat" class="floating-chat" style="display: none;">
+        <div class="floating-chat-header" id="chatDragHandle">
+            <div class="chat-title-bar">
+                <h3>💬 Group Chat</h3>
+                <span class="chat-info-badge">7 days retention</span>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-control-btn clear-btn" id="clearChatBtn" onclick="clearAllMessages()" title="Clear all messages" style="display: none;">🗑️</button>
+                <button class="chat-control-btn minimize-btn" id="minimizeBtn" onclick="minimizeChat()" title="Minimize">−</button>
+                <button class="chat-control-btn maximize-btn hidden" id="maximizeBtn" onclick="maximizeChat()" title="Maximize">□</button>
+                <button class="chat-control-btn close-btn" onclick="closeChat()" title="Close">×</button>
+            </div>
+        </div>
+        <div class="floating-chat-body">
+            <div class="online-users-section">
+                <div class="online-users-label">🟢 Online Users</div>
+                <div class="online-users-scroll" id="onlineUsersList">
+                    <div class="online-user-item">
+                        <span class="online-status"></span>
+                        <span class="online-user-name">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-container floating-chat-styled">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <span class="empty-icon">💬</span>
+                        <p>Start the conversation!</p>
+                        <p class="empty-subtitle">Be the first to send a message to the group.</p>
+                    </div>
+                </div>
+                <div id="typingIndicator" class="typing-indicator hidden">
+                    <span id="typingUsers"></span>
+                    <span class="typing-dots"><span></span><span></span><span></span></span>
+                </div>
+                <div id="replyIndicator" class="reply-indicator hidden">
+                    <div class="reply-label">↩️ Replying to: <span id="replyUsername">username</span></div>
+                    <button class="reply-close" onclick="cancelReply()">×</button>
+                </div>
+                <div class="chat-input-area">
+                    <div class="chat-input-wrapper">
+                        <button class="emoji-picker-btn" onclick="toggleEmojiPicker()" title="Add emoji">😊</button>
+                        <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" maxlength="500" onkeypress="handleChatKeyPress(event)">
+                        <span class="chat-char-count" id="chatCharCount">0/500</span>
+                    </div>
+                    <button id="chatSendBtn" class="btn btn-chat-send" onclick="sendChatMessage()">
+                        <span>Send</span>
+                    </button>
+                </div>
+                <div id="emojiPicker" class="emoji-picker hidden">
+                    <div class="emoji-grid">
+                        😊 😂 ❤️ 😍 🔥 👍 😎 😢 😡 😱 👏 🎉 🙏 😌 😴 😒 💯 ✨ 🌟 ⭐ 🎊 💪 🤔 🤷 😅 😘 😚 😙 🤐 😶
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="floating-chat-resize" id="chatResizeHandle"></div>
+    </div>
+    
+    <!-- Floating Widget for Memory Verse and Announcements -->
+    <div id="floatingWidget" class="floating-widget">
+        <div class="floating-widget-header">
+            <h3>📖 Daily Inspiration & Announcements</h3>
+            <button class="widget-close-btn" onclick="closeWidget()" title="Close">×</button>
+        </div>
+        <div class="floating-widget-body">
+            <!-- Memory Verse Display -->
+            <div id="memoryVerseWidget" class="memory-verse-widget">
+                <div class="verse-title">✝️ Today's Memory Verse</div>
+                <div id="memoryVerseText" class="verse-text">Loading...</div>
+                <div id="memoryVerseReference" class="verse-reference">Bible</div>
+            </div>
+
+            <!-- Announcements Section -->
+            <div class="announcements-wrapper">
+                <div class="section-header">
+                    <h2>📢 Announcements</h2>
+                    <button class="btn btn-sm" id="newAnnouncementBtn" onclick="showAnnouncementForm()">+ New</button>
+                </div>
+                <div class="new-announcement-form hidden" id="newAnnouncementForm">
+                    <input type="text" id="announcementTitle" placeholder="Announcement title" class="form-input">
+                    <textarea id="announcementContent" placeholder="Announcement content..." class="post-textarea event-textarea"></textarea>
+                    <input type="date" id="announcementDate" class="form-input">
+                    <div class="form-actions">
+                        <button class="btn btn-primary btn-sm" onclick="saveAnnouncement()">Save Announcement</button>
+                        <button class="btn btn-secondary btn-sm" onclick="cancelAnnouncement()">Cancel</button>
+                    </div>
+                </div>
+                <div class="announcements-list" id="announcementsList">
+                    <div class="empty-state">No announcements yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Toggle Button -->
+    <button id="chatToggleBtn" class="chat-toggle-btn" onclick="toggleChat()" title="Open Chat">
+        💬
+        <span id="chatUnreadBadge" class="chat-unread-badge" style="display: none;">0</span>
+    </button>
+
+    <!-- Widget Toggle Button -->
+    <button id="widgetToggleBtn" class="widget-toggle-btn" onclick="toggleWidget()" title="Toggle Widget">
+        📖
+    </button>
 
     <!-- Toast Notification Container -->
     <div id="notificationContainer" class="notification-container"></div>

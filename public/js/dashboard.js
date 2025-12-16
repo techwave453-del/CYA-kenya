@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboardData();
     setupScrollNav();
     initializeFloatingChat();
+    initializeFloatingWidget();
 });
 
 function setupScrollNav() {
@@ -360,6 +361,46 @@ function initializeFloatingChat() {
         initChatDragResize();
         updateUnreadBadge();
     }
+}
+
+// Initialize Floating Widget
+function initializeFloatingWidget() {
+    const widget = document.getElementById('floatingWidget');
+    const btn = document.getElementById('widgetToggleBtn');
+    
+    if (widget && btn) {
+        // Show widget initially
+        widget.classList.remove('hidden');
+        btn.classList.add('hidden');
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (!widget.classList.contains('hidden')) {
+                widget.classList.add('hidden');
+                btn.classList.remove('hidden');
+            }
+        }, 5000);
+    }
+}
+
+function toggleWidget() {
+    const widget = document.getElementById('floatingWidget');
+    const btn = document.getElementById('widgetToggleBtn');
+    
+    if (widget.classList.contains('hidden')) {
+        widget.classList.remove('hidden');
+        btn.classList.add('hidden');
+    } else {
+        widget.classList.add('hidden');
+        btn.classList.remove('hidden');
+    }
+}
+
+function closeWidget() {
+    const widget = document.getElementById('floatingWidget');
+    const btn = document.getElementById('widgetToggleBtn');
+    widget.classList.add('hidden');
+    btn.classList.remove('hidden');
 }
 
 // Bible verses for daily memory verse
