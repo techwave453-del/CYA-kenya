@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupScrollNav();
     initializeFloatingChat();
     initializeFloatingWidget();
+    setupQuickAccessDrag();
 });
 
 function setupScrollNav() {
@@ -1968,6 +1969,95 @@ function toggleQuickAccess() {
         document.body.classList.remove('no-scroll');
         document.body.classList.remove('panel-open-active');
     }
+}
+
+// Make the Quick Access toggle draggable and persist its position
+function setupQuickAccessDrag() {
+    const btn = document.getElementById('quickAccessToggle');
+    if (!btn) return;
+
+    btn.style.position = 'fixed';
+    btn.style.zIndex = 10000;
+    btn.style.cursor = 'grab';
+    btn.style.userSelect = 'none';
+
+    // Restore saved position
+    try {
+        const saved = localStorage.getItem('quickAccessPos');
+        if (saved) {
+            const pos = JSON.parse(saved);
+            if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+                btn.style.left = pos.x + 'px';
+                btn.style.top = pos.y + 'px';
+                btn.style.right = 'auto';
+                btn.style.bottom = 'auto';
+            }
+        }
+    } catch (e) { }
+
+    let dragging = false;
+    let offset = { x: 0, y: 0 };
+
+    function startDrag(clientX, clientY) {
+        dragging = true;
+        btn.style.cursor = 'grabbing';
+        const rect = btn.getBoundingClientRect();
+        offset.x = clientX - rect.left;
+        offset.y = clientY - rect.top;
+    }
+
+    function onMove(clientX, clientY) {
+        if (!dragging) return;
+        let x = clientX - offset.x;
+        let y = clientY - offset.y;
+        x = Math.max(8, Math.min(x, window.innerWidth - btn.offsetWidth - 8));
+        y = Math.max(8, Math.min(y, window.innerHeight - btn.offsetHeight - 8));
+        btn.style.left = x + 'px';
+        btn.style.top = y + 'px';
+        btn.style.right = 'auto';
+        btn.style.bottom = 'auto';
+    }
+
+    function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        btn.style.cursor = 'grab';
+        try {
+            const rect = btn.getBoundingClientRect();
+            localStorage.setItem('quickAccessPos', JSON.stringify({ x: rect.left, y: rect.top }));
+        } catch (e) { }
+    }
+
+    btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        startDrag(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup', () => endDrag());
+
+    btn.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        if (t) startDrag(t.clientX, t.clientY);
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        if (t) {
+            onMove(t.clientX, t.clientY);
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => endDrag());
+
+    btn.addEventListener('dblclick', () => {
+        localStorage.removeItem('quickAccessPos');
+        btn.style.left = '';
+        btn.style.top = '';
+        btn.style.right = '20px';
+        btn.style.bottom = '20px';
+    });
 }
 
 // Close panels on Escape
