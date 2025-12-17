@@ -61,16 +61,21 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   color: #fff;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 body.no-scroll {
   overflow: hidden;
   position: fixed;
   width: 100%;
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* ===============================
@@ -89,8 +94,10 @@ body.no-scroll {
   grid-template-columns: 320px 1fr 320px;
   gap: 20px;
   padding: 20px;
-  min-height: calc(100vh - 100px);
+  min-height: auto;
+  height: auto;
   margin-top: 0;
+  flex: 1;
 }
 
 .main-content {
@@ -101,11 +108,14 @@ body.no-scroll {
   padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100vh - 80px);
 }
 
 .main-responsive {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 /* Responsive grid for smaller screens */
@@ -113,6 +123,8 @@ body.no-scroll {
   .dashboard-container {
     grid-template-columns: 1fr;
     gap: 16px;
+    min-height: auto;
+    height: auto;
   }
   
   .sidebar,
@@ -124,6 +136,8 @@ body.no-scroll {
     left: auto;
     right: auto;
     margin-bottom: 16px;
+    max-height: none;
+    height: auto;
   }
   
   .sidebar.panel-open,
@@ -164,7 +178,6 @@ body.no-scroll {
 
 .draggable {
   position: fixed;
-  touch-action: none;
   user-select: none;
   transition: left .25s ease, top .25s ease;
 }
@@ -1075,10 +1088,15 @@ body.layout-edit-mode::before {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 12px;
+    min-height: auto;
+    height: auto;
   }
   
   .main-content {
     padding: 16px;
+    max-height: none;
+    height: auto;
+    overflow: visible;
   }
 
   .tabs-header { 
@@ -1118,15 +1136,18 @@ body.layout-edit-mode::before {
     left: auto !important;
     right: auto !important;
     margin-bottom: 16px;
-    max-height: 300px;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   /* Make floating chat more usable on small screens */
   #floatingChat {
-    width: 100vw;
+    width: calc(100vw - 20px);
     height: 60vh;
     bottom: 0;
-    right: 0;
+    right: 10px;
+    left: 10px;
     border-radius: 12px 12px 0 0;
   }
   .floating-chat-resize { display: none; }
