@@ -72,6 +72,7 @@ const managementRoles = ['system-admin', 'admin', 'moderator', 'chairperson', 's
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     setupTabNavigation();
+    bindDashboardEventHandlers();
     loadDashboardData();
     setupScrollNav();
     initializeFloatingChat();
@@ -151,6 +152,115 @@ function setupTaskButtonVisibility() {
 function setupTabNavigation() {
     // Removed old tab navigation - now using direct tab buttons
 }
+
+// Bind DOM event listeners to elements (removes inline handlers and centralizes logic)
+function bindDashboardEventHandlers() {
+    // Auth
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    const logoutMobileBtn = document.getElementById('logoutMobileBtn');
+    if (logoutMobileBtn) logoutMobileBtn.addEventListener('click', logoutMobile);
+
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', (e) => {
+        toggleMobileMenu();
+        const expanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+        mobileMenuBtn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+    });
+
+    document.querySelectorAll('.mobile-nav-link').forEach(a => a.addEventListener('click', () => {
+        const mobileNav = document.getElementById('mobileNav');
+        if (mobileNav && mobileNav.classList.contains('active')) toggleMobileMenu();
+    }));
+
+    // Panels
+    document.querySelectorAll('.panel-close-btn').forEach(btn => btn.addEventListener('click', closePanels));
+
+    // Posts
+    const postSubmitBtn = document.getElementById('postSubmitBtn');
+    if (postSubmitBtn) postSubmitBtn.addEventListener('click', createPost);
+    const cancelPostBtn = document.getElementById('cancelPostBtn');
+    if (cancelPostBtn) cancelPostBtn.addEventListener('click', cancelPost);
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        switchTab(tab, btn);
+    }));
+
+    // Tasks
+    const newTaskBtn = document.getElementById('newTaskBtn');
+    if (newTaskBtn) newTaskBtn.addEventListener('click', showTaskForm);
+    const saveTaskBtn = document.getElementById('saveTaskBtn');
+    if (saveTaskBtn) saveTaskBtn.addEventListener('click', saveTask);
+    const cancelTaskBtn = document.getElementById('cancelTaskBtn');
+    if (cancelTaskBtn) cancelTaskBtn.addEventListener('click', cancelTask);
+
+    // Events
+    const newEventBtn = document.getElementById('newEventBtn');
+    if (newEventBtn) newEventBtn.addEventListener('click', showEventForm);
+    const saveEventBtn = document.getElementById('saveEventBtn');
+    if (saveEventBtn) saveEventBtn.addEventListener('click', saveEvent);
+    const cancelEventBtn = document.getElementById('cancelEventBtn');
+    if (cancelEventBtn) cancelEventBtn.addEventListener('click', cancelEvent);
+
+    // Announcements
+    const newAnnouncementBtn = document.getElementById('newAnnouncementBtn');
+    if (newAnnouncementBtn) newAnnouncementBtn.addEventListener('click', showAnnouncementForm);
+    const saveAnnouncementBtn = document.getElementById('saveAnnouncementBtn');
+    if (saveAnnouncementBtn) saveAnnouncementBtn.addEventListener('click', saveAnnouncement);
+    const cancelAnnouncementBtn = document.getElementById('cancelAnnouncementBtn');
+    if (cancelAnnouncementBtn) cancelAnnouncementBtn.addEventListener('click', cancelAnnouncement);
+
+    // Quick actions
+    const openChatQuickBtn = document.getElementById('openChatQuickBtn');
+    if (openChatQuickBtn) openChatQuickBtn.addEventListener('click', (e) => { e.preventDefault(); scrollToChat(); });
+
+    // Chat controls
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    if (clearChatBtn) clearChatBtn.addEventListener('click', clearAllMessages);
+    const minimizeBtn = document.getElementById('minimizeBtn');
+    if (minimizeBtn) minimizeBtn.addEventListener('click', minimizeChat);
+    const maximizeBtn = document.getElementById('maximizeBtn');
+    if (maximizeBtn) maximizeBtn.addEventListener('click', maximizeChat);
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    if (closeChatBtn) closeChatBtn.addEventListener('click', closeChat);
+
+    const replyCancelBtn = document.getElementById('replyCancelBtn');
+    if (replyCancelBtn) replyCancelBtn.addEventListener('click', cancelReply);
+
+    const emojiPickerBtn = document.getElementById('emojiPickerBtn');
+    if (emojiPickerBtn) emojiPickerBtn.addEventListener('click', toggleEmojiPicker);
+
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    if (chatSendBtn) chatSendBtn.addEventListener('click', sendChatMessage);
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) chatInput.addEventListener('keydown', handleChatKeyPress);
+
+    // Widget
+    const widgetCloseBtn = document.getElementById('widgetCloseBtn');
+    if (widgetCloseBtn) widgetCloseBtn.addEventListener('click', closeWidget);
+
+    // Toggles
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
+    if (chatToggleBtn) chatToggleBtn.addEventListener('click', toggleChat);
+    const widgetToggleBtn = document.getElementById('widgetToggleBtn');
+    if (widgetToggleBtn) widgetToggleBtn.addEventListener('click', toggleWidget);
+    const quickAccessToggle = document.getElementById('quickAccessToggle');
+    if (quickAccessToggle) quickAccessToggle.addEventListener('click', toggleQuickAccess);
+
+    // Confirmation modal
+    const cancelConfirmationBtn = document.getElementById('cancelConfirmationBtn');
+    if (cancelConfirmationBtn) cancelConfirmationBtn.addEventListener('click', cancelConfirmation);
+    const confirmButton = document.getElementById('confirmButton');
+    if (confirmButton) confirmButton.addEventListener('click', executeConfirmation);
+
+    // Layout edit
+    const layoutEditToggle = document.getElementById('layoutEditToggle');
+    if (layoutEditToggle) layoutEditToggle.addEventListener('click', () => document.body.classList.toggle('layout-edit-mode'));
+}
+
 
 function switchTab(tabId, btn) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
@@ -419,18 +529,60 @@ const BIBLE_VERSES = [
 ];
 
 let pendingConfirmation = null;
+let __previousActiveElement = null;
+let __modalKeydownHandler = null;
 
 // Confirmation Modal Functions
 function showConfirmationDialog(title, message, onConfirm) {
     pendingConfirmation = onConfirm;
+    const modal = document.getElementById('confirmationModal');
+    if (!modal) return;
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmationModal').classList.remove('hidden');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Save focus and trap keyboard inside modal
+    __previousActiveElement = document.activeElement;
+    const focusable = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => !el.disabled);
+    if (focusable.length) focusable[0].focus();
+
+    __modalKeydownHandler = function(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelConfirmation();
+        } else if (e.key === 'Tab') {
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
+    };
+
+    document.addEventListener('keydown', __modalKeydownHandler);
 }
 
 function cancelConfirmation() {
     pendingConfirmation = null;
-    document.getElementById('confirmationModal').classList.add('hidden');
+    const modal = document.getElementById('confirmationModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+
+    if (__modalKeydownHandler) {
+        document.removeEventListener('keydown', __modalKeydownHandler);
+        __modalKeydownHandler = null;
+    }
+
+    if (__previousActiveElement && typeof __previousActiveElement.focus === 'function') {
+        __previousActiveElement.focus();
+        __previousActiveElement = null;
+    }
 }
 
 function executeConfirmation() {
@@ -1887,7 +2039,16 @@ function prependPost(post) {
 
 function toggleMobileMenu() {
     const mobileNav = document.getElementById('mobileNav');
-    mobileNav.classList.toggle('active');
+    const btn = document.getElementById('mobileMenuBtn');
+    if (!mobileNav) return;
+    const isActive = mobileNav.classList.toggle('active');
+    if (btn) btn.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+    if (isActive) {
+        const first = mobileNav.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
+        if (first && typeof first.focus === 'function') first.focus();
+    } else {
+        if (btn) btn.focus();
+    }
 }
 
 function logoutMobile() {

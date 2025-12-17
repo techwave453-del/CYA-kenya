@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1a365d">
     <title>CYA Dashboard - Christian Youth in Action</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
         <script defer>
             if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
                 window.addEventListener('load', () => {
@@ -21,6 +21,7 @@
         </script>
 </head>
 <body class="dashboard-page">
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
     <!-- Top Navigation -->
     <nav class="navbar" id="topNav" role="navigation" aria-label="Top Navigation">
         <div class="nav-brand">
@@ -33,9 +34,9 @@
             <a href="dashboard.html">📊 Dashboard</a>
             <a href="leaderboard.html">🏆 Leaderboard</a>
             <span id="userDisplay"></span>
-            <button type="button" class="btn btn-danger btn-small" onclick="logout()" aria-label="Logout">Logout</button>
+            <button type="button" id="logoutBtn" class="btn btn-danger btn-small" aria-label="Logout">Logout</button>
         </div>
-        <button type="button" class="mobile-menu" id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-controls="mobileNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button type="button" class="mobile-menu" id="mobileMenuBtn" aria-controls="mobileNav" aria-expanded="false" aria-label="Toggle navigation">
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
@@ -43,12 +44,12 @@
     </nav>
 
     <div class="mobile-nav" id="mobileNav">
-        <a href="game.html" onclick="toggleMobileMenu()">📖 Bible Trivia</a>
-        <a href="games.html" onclick="toggleMobileMenu()">🎮 Bible Games</a>
-        <a href="dashboard.html" onclick="toggleMobileMenu()">📊 Dashboard</a>
-        <a href="leaderboard.html" onclick="toggleMobileMenu()">🏆 Leaderboard</a>
+        <a href="game.html" class="mobile-nav-link">📖 Bible Trivia</a>
+        <a href="games.html" class="mobile-nav-link">🎮 Bible Games</a>
+        <a href="dashboard.html" class="mobile-nav-link">📊 Dashboard</a>
+        <a href="leaderboard.html" class="mobile-nav-link">🏆 Leaderboard</a>
         <span id="userDisplayMobile"></span>
-        <button type="button" class="btn btn-danger btn-small btn-mobile-logout" onclick="logoutMobile()" aria-label="Logout">Logout</button>
+        <button type="button" id="logoutMobileBtn" class="btn btn-danger btn-small btn-mobile-logout" aria-label="Logout">Logout</button>
     </div>
 
     <div class="container">
@@ -57,7 +58,7 @@
         <div id="dashboardContainer" class="dashboard-container">
             <!-- Sidebar -->
             <aside class="sidebar">
-                <button type="button" class="panel-close-btn" onclick="closePanels()" aria-label="Close Sidebar">×</button>
+                <button type="button" class="panel-close-btn" aria-label="Close Sidebar">×</button>
                 <div class="sidebar-section">
                     <h3>Member Role</h3>
                     <div id="memberChurch" class="member-role-badge">Loading...</div>
@@ -66,7 +67,8 @@
             </aside>
 
             <!-- Main Content -->
-            <main class="main-content main-responsive">
+            <main id="mainContent" class="main-content main-responsive" role="main" aria-labelledby="dashboardHeading">
+                <h1 id="dashboardHeading" class="page-heading">Dashboard</h1>
                 <!-- Tabs Section for other content -->
                 <div class="tabs-section">
                     <!-- Posts Section -->
@@ -76,13 +78,14 @@
                             <button type="button" class="btn btn-sm" id="newPostBtn">+ Share Idea</button>
                         </div>
                         <div class="new-post-form hidden" id="newPostForm">
-                            <textarea id="postContent" placeholder="Share your idea or thought..." class="post-textarea"></textarea>
-                            <input type="text" id="postCaption" placeholder="Optional caption for image..." class="form-input" />
-                            <input type="file" id="postImage" accept="image/*" />
+                            <textarea id="postContent" placeholder="Share your idea or thought..." class="post-textarea" aria-label="Share your idea or thought"></textarea>
+                            <input type="text" id="postCaption" placeholder="Optional caption for image..." class="form-input" aria-label="Optional caption for image" />
+                            <input type="file" id="postImage" accept="image/*" aria-label="Upload an image for the post" />
+                            <input type="text" id="postImageAlt" placeholder="Image description (alt text)" class="form-input" aria-label="Image description for accessibility" />
                             <input type="hidden" id="postEditId">
                             <div class="post-actions">
-                                <button type="button" class="btn btn-primary btn-sm" id="postSubmitBtn" onclick="createPost()">Post</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelPost()">Cancel</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="postSubmitBtn">Post</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="cancelPostBtn">Cancel</button>
                             </div>
                         </div>
                         <div class="posts-list" id="postsList">
@@ -91,29 +94,29 @@
                     </section>
 
                     <div class="tabs-header">
-                        <button class="tab-btn active" data-tab="posts" onclick="switchTab('posts', this)">📝 Posts</button>
-                        <button class="tab-btn" data-tab="tasks" onclick="switchTab('tasks', this)">📋 Tasks</button>
-                        <button class="tab-btn" data-tab="activities" onclick="switchTab('activities', this)">🎯 Activities</button>
+                        <button class="tab-btn active" data-tab="posts">📝 Posts</button>
+                        <button class="tab-btn" data-tab="tasks">📋 Tasks</button>
+                        <button class="tab-btn" data-tab="activities">🎯 Activities</button>
                     </div>
 
                     <!-- Tasks Section -->
                     <section id="tasks" class="content-section">
                         <div class="section-header">
                             <h2>📋 Tasks & Responsibilities</h2>
-                            <button type="button" class="btn btn-sm" onclick="showTaskForm()">+ New Task</button>
+                            <button type="button" id="newTaskBtn" class="btn btn-sm">+ New Task</button>
                         </div>
                         <div class="new-task-form hidden" id="newTaskForm">
-                            <input type="text" id="taskTitle" placeholder="Task title" class="form-input">
-                            <input type="text" id="taskAssignee" placeholder="Assign to..." class="form-input">
-                            <select id="taskPriority" class="form-input">
+                            <input type="text" id="taskTitle" placeholder="Task title" class="form-input" aria-label="Task title">
+                            <input type="text" id="taskAssignee" placeholder="Assign to..." class="form-input" aria-label="Assignee">
+                            <select id="taskPriority" class="form-input" aria-label="Task priority">
                                 <option value="low">Low Priority</option>
                                 <option value="medium" selected>Medium Priority</option>
                                 <option value="high">High Priority</option>
                             </select>
                             <input type="hidden" id="taskEditId">
                             <div class="form-actions">
-                                <button type="button" class="btn btn-primary btn-sm" onclick="saveTask()">Save Task</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelTask()">Cancel</button>
+                                <button type="button" id="saveTaskBtn" class="btn btn-primary btn-sm">Save Task</button>
+                                <button type="button" id="cancelTaskBtn" class="btn btn-secondary btn-sm">Cancel</button>
                             </div>
                         </div>
                         <div class="tasks-list" id="tasksList">
@@ -125,20 +128,20 @@
                     <section id="activities" class="content-section">
                         <div class="section-header">
                             <h2>🎯 Activities & Events</h2>
-                            <button type="button" class="btn btn-sm hidden" id="newEventBtn" onclick="showEventForm()">+ New Event</button>
+                            <button type="button" class="btn btn-sm hidden" id="newEventBtn">+ New Event</button>
                         </div>
                         <div class="mission-statement hidden" id="missionStatement">
                             <p><strong>CYA Mission:</strong> Christian Youth in Action - "Don't let anyone look down on you because you are young, but set an example for the believers in speech, in conduct, in love, in faith and in purity." (1 Timothy 4:12)</p>
                             <p>Our vision is to empower Christian youth to grow spiritually, serve their community, and become strong witnesses for Christ.</p>
                         </div>
                         <div class="new-event-form hidden" id="newEventForm">
-                            <input type="text" id="eventTitle" placeholder="Event title" class="form-input">
-                            <input type="date" id="eventDate" class="form-input">
-                            <textarea id="eventDescription" placeholder="Event description..." class="post-textarea event-textarea"></textarea>
+                            <input type="text" id="eventTitle" placeholder="Event title" class="form-input" aria-label="Event title">
+                            <input type="date" id="eventDate" class="form-input" aria-label="Event date">
+                            <textarea id="eventDescription" placeholder="Event description..." class="post-textarea event-textarea" aria-label="Event description"></textarea>
                             <input type="hidden" id="eventEditId">
                             <div class="form-actions">
-                                <button type="button" class="btn btn-primary btn-sm" onclick="saveEvent()">Save Event</button>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelEvent()">Cancel</button>
+                                <button type="button" id="saveEventBtn" class="btn btn-primary btn-sm">Save Event</button>
+                                <button type="button" id="cancelEventBtn" class="btn btn-secondary btn-sm">Cancel</button>
                             </div>
                         </div>
                         <div class="activities-list" id="activitiesList">
@@ -150,14 +153,14 @@
 
             <!-- Right Sidebar - Quick Access -->
             <aside class="right-sidebar">
-                    <button type="button" class="panel-close-btn" onclick="closePanels()" aria-label="Close Quick Access">×</button>
+                    <button type="button" class="panel-close-btn" aria-label="Close Quick Access">×</button>
                 <div class="sidebar-section">
                     <h3>⚡ Quick Access</h3>
                     <div class="quick-access-grid">
                         <a href="game.html" class="quick-btn">🎮 Play Bible Trivia</a>
                         <a href="games.html" class="quick-btn">🕹️ Play Games</a>
                         <a href="leaderboard.html" class="quick-btn">🏆 Leaderboard</a>
-                        <a href="#" class="quick-btn" onclick="scrollToChat(); return false;">💬 Open Chat</a>
+                        <a href="#" id="openChatQuickBtn" class="quick-btn">💬 Open Chat</a>
                         <a href="profile.html" class="quick-btn">👤 Profile</a>
                     </div>
                 </div>
@@ -179,10 +182,10 @@
                 <span class="chat-info-badge">7 days retention</span>
             </div>
             <div class="chat-controls">
-                <button type="button" class="chat-control-btn clear-btn" id="clearChatBtn" onclick="clearAllMessages()" title="Clear all messages" style="display: none;">🗑️</button>
-                <button type="button" class="chat-control-btn minimize-btn" id="minimizeBtn" onclick="minimizeChat()" title="Minimize">−</button>
-                <button type="button" class="chat-control-btn maximize-btn hidden" id="maximizeBtn" onclick="maximizeChat()" title="Maximize">□</button>
-                <button type="button" class="chat-control-btn close-btn" onclick="closeChat()" title="Close">×</button>
+                <button type="button" class="chat-control-btn clear-btn" id="clearChatBtn" title="Clear all messages" style="display: none;">🗑️</button>
+                <button type="button" class="chat-control-btn minimize-btn" id="minimizeBtn" title="Minimize">−</button>
+                <button type="button" class="chat-control-btn maximize-btn hidden" id="maximizeBtn" title="Maximize">□</button>
+                <button type="button" class="chat-control-btn close-btn" id="closeChatBtn" title="Close">×</button>
             </div>
         </div>
         <div class="floating-chat-body">
@@ -209,15 +212,15 @@
                 </div>
                 <div id="replyIndicator" class="reply-indicator hidden">
                     <div class="reply-label">↩️ Replying to: <span id="replyUsername">username</span></div>
-                    <button type="button" class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">×</button>
+                    <button type="button" class="reply-close" id="replyCancelBtn" aria-label="Cancel reply">×</button>
                 </div>
                 <div class="chat-input-area">
                     <div class="chat-input-wrapper">
-                        <button type="button" class="emoji-picker-btn" onclick="toggleEmojiPicker()" title="Add emoji" aria-label="Add emoji">😊</button>
-                        <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" maxlength="500" onkeypress="handleChatKeyPress(event)">
+                        <button type="button" class="emoji-picker-btn" id="emojiPickerBtn" title="Add emoji" aria-label="Add emoji">😊</button>
+                        <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" maxlength="500" aria-label="Type a message">
                         <span class="chat-char-count" id="chatCharCount">0/500</span>
                     </div>
-                    <button type="button" id="chatSendBtn" class="btn btn-chat-send" onclick="sendChatMessage()" aria-label="Send message">
+                    <button type="button" id="chatSendBtn" class="btn btn-chat-send" aria-label="Send message">
                         <span>Send</span>
                     </button>
                 </div>
@@ -235,7 +238,7 @@
     <div id="floatingWidget" class="floating-widget">
         <div class="floating-widget-header">
             <h3>📖 Daily Inspiration & Announcements</h3>
-            <button type="button" class="widget-close-btn" onclick="closeWidget()" title="Close" aria-label="Close widget">×</button>
+            <button type="button" id="widgetCloseBtn" class="widget-close-btn" title="Close" aria-label="Close widget">×</button>
         </div>
         <div class="floating-widget-body">
             <!-- Memory Verse Display -->
@@ -249,15 +252,15 @@
             <div class="announcements-wrapper">
                 <div class="section-header">
                     <h2>📢 Announcements</h2>
-                    <button type="button" class="btn btn-sm" id="newAnnouncementBtn" onclick="showAnnouncementForm()">+ New</button>
+                    <button type="button" class="btn btn-sm" id="newAnnouncementBtn">+ New</button>
                 </div>
                 <div class="new-announcement-form hidden" id="newAnnouncementForm">
-                    <input type="text" id="announcementTitle" placeholder="Announcement title" class="form-input">
-                    <textarea id="announcementContent" placeholder="Announcement content..." class="post-textarea event-textarea"></textarea>
-                    <input type="date" id="announcementDate" class="form-input">
+                    <input type="text" id="announcementTitle" placeholder="Announcement title" class="form-input" aria-label="Announcement title">
+                    <textarea id="announcementContent" placeholder="Announcement content..." class="post-textarea event-textarea" aria-label="Announcement content"></textarea>
+                    <input type="date" id="announcementDate" class="form-input" aria-label="Announcement date">
                     <div class="form-actions">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="saveAnnouncement()">Save Announcement</button>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="cancelAnnouncement()">Cancel</button>
+                        <button type="button" id="saveAnnouncementBtn" class="btn btn-primary btn-sm">Save Announcement</button>
+                        <button type="button" id="cancelAnnouncementBtn" class="btn btn-secondary btn-sm">Cancel</button>
                     </div>
                 </div>
                 <div class="announcements-list" id="announcementsList">
@@ -268,13 +271,13 @@
     </div>
     
     <!-- Chat Toggle Button -->
-    <button type="button" id="chatToggleBtn" class="chat-toggle-btn" onclick="toggleChat()" title="Open Chat" aria-label="Open chat">
+    <button type="button" id="chatToggleBtn" class="chat-toggle-btn" title="Open Chat" aria-label="Open chat">
         💬
         <span id="chatUnreadBadge" class="chat-unread-badge" style="display: none;">0</span>
     </button>
 
     <!-- Widget Toggle Button -->
-    <button type="button" id="widgetToggleBtn" class="widget-toggle-btn" onclick="toggleWidget()" title="Toggle Widget" aria-label="Toggle widget">
+    <button type="button" id="widgetToggleBtn" class="widget-toggle-btn" title="Toggle Widget" aria-label="Toggle widget">
         📖
     </button>
 
@@ -282,24 +285,21 @@
     <div id="notificationContainer" class="notification-container" role="status" aria-live="polite"></div>
 
     <!-- Mobile quick toggles -->
-    <button type="button" id="quickAccessToggle" class="mobile-quick-toggle quick-access-toggle" onclick="toggleQuickAccess()" title="Quick Access" aria-label="Quick access">⚡</button>
+    <button type="button" id="quickAccessToggle" class="mobile-quick-toggle quick-access-toggle" title="Quick Access" aria-label="Quick access">⚡</button>
 
     <!-- Styled Confirmation Modal -->
-    <div id="confirmationModal" class="confirmation-modal hidden">
+    <div id="confirmationModal" class="confirmation-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
         <div class="confirmation-content">
             <h3 id="confirmTitle">Confirm Action</h3>
             <p id="confirmMessage"></p>
             <div class="confirmation-actions">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelConfirmation()">Cancel</button>
-                <button type="button" class="btn btn-danger btn-sm" id="confirmButton" onclick="executeConfirmation()">Confirm</button>
+                <button type="button" id="cancelConfirmationBtn" class="btn btn-secondary btn-sm">Cancel</button>
+                <button type="button" id="confirmButton" class="btn btn-danger btn-sm">Confirm</button>
             </div>
         </div>
     </div>
 
 <button id="layoutEditToggle" class="edit-toggle-btn">✏️ Edit layout</button>
-
-<div id="floatingChat" class="draggable"></div>
-<div class="floating-widget draggable" id="widget-1"></div>
 
 <div class="layout-grid">
   <div class="grid-widget" id="gw-1" data-col="4" data-row="2"></div>
