@@ -1390,6 +1390,89 @@ function autoApproveRequestsJob() {
 // Start auto-approval job - runs every 2 minutes
 setInterval(autoApproveRequestsJob, 2 * 60 * 1000);
 
+// ==================== USERS LIST ENDPOINT ====================
+
+app.get('/api/users', verifyToken, (req, res) => {
+  try {
+    const users = db.prepare('SELECT username, role, church, created_at FROM users ORDER BY username').all();
+    res.json({ users });
+  } catch (error) {
+    console.error('Users list error:', error);
+    res.status(500).json({ error: 'Failed to load users' });
+  }
+});
+
+// ==================== CHAT MESSAGES ENDPOINTS ====================
+
+app.get('/api/chat', verifyToken, (req, res) => {
+  try {
+    const messages = db.prepare(`
+      SELECT m.id, m.username, m.content, m.created_at 
+      FROM messages m 
+      ORDER BY m.created_at DESC 
+      LIMIT 100
+    `).all().reverse();
+    res.json({ messages });
+  } catch (error) {
+    console.error('Load chat error:', error);
+    res.status(500).json({ error: 'Failed to load chat' });
+  }
+});
+
+app.post('/api/chat', verifyToken, (req, res) => {
+  try {
+    const { content } = req.body;
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+    
+    const username = req.username;
+    const userId = db.prepare('SELECT id FROM users WHERE username = ?').get(username)?.id;
+    
+    const stmt = db.prepare(`
+      INSERT INTO messages (user_id, username, content, created_at) 
+      VALUES (?, ?, ?, datetime('now'))
+    `);
+    const result = stmt.run(userId || null, username, content.trim());
+    
+    const message = db.prepare(`
+      SELECT id, username, content, created_at FROM messages WHERE id = ?
+    `).get(result.lastInsertRowid);
+    
+    res.json({ message });
+  } catch (error) {
+    console.error('Send chat error:', error);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+app.get('/api/chat/since/:timestamp', verifyToken, (req, res) => {
+  try {
+    const timestamp = decodeURIComponent(req.params.timestamp);
+    const messages = db.prepare(`
+      SELECT m.id, m.username, m.content, m.created_at 
+      FROM messages m 
+      WHERE m.created_at > ? 
+      ORDER BY m.created_at DESC
+    `).all(timestamp).reverse();
+    res.json({ messages });
+  } catch (error) {
+    console.error('Chat since error:', error);
+    res.status(500).json({ error: 'Failed to load messages' });
+  }
+});
+
+app.delete('/api/chat/:id', verifyToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    db.prepare('DELETE FROM messages WHERE id = ?').run(id);
+    res.json({ message: 'Message deleted' });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
 // ==================== USER STATS ENDPOINT ====================
 
 app.get('/api/stats', verifyToken, (req, res) => {
@@ -1402,7 +1485,7 @@ app.get('/api/stats', verifyToken, (req, res) => {
 
     const postCount = db.prepare('SELECT COUNT(*) as count FROM posts WHERE user_id = ?').get(user.id).count;
     const commentCount = db.prepare('SELECT COUNT(*) as count FROM comments WHERE user_id = ?').get(user.id).count;
-    const likeCount = db.prepare('SELECT COUNT(*) as count FROM reactions WHERE user_id = ? AND type = "like"').get(user.id).count;
+    const likeCount = db.prepare("SELECT COUNT(*) as count FROM reactions WHERE user_id = ? AND type = 'like'").get(user.id).count;
 
     res.json({
       username,
