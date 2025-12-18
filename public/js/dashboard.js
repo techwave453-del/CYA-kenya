@@ -1633,7 +1633,7 @@ async function sendChatMessage() {
         if (!authToken) {
             try { authToken = localStorage.getItem('authToken'); } catch (e) { authToken = null; }
         }
-        const payload = { message };
+        const payload = { content: message };
         if (replyingToMessageId) {
             payload.replyTo = replyingToMessageId;
         }
