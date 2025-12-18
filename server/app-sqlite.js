@@ -1004,8 +1004,8 @@ app.delete('/api/admin/codes/:code', verifyToken, requireRole([ROLES.SYSTEM_ADMI
   }
 });
 
-// Get all code requests (admin only) - TEMP: no auth for testing
-app.get('/api/admin/code-requests', (req, res) => {
+// Get all code requests (admin only)
+app.get('/api/admin/code-requests', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
   try {
     const requests = db.prepare('SELECT * FROM code_requests ORDER BY created_at DESC').all();
     res.json({ requests });
@@ -1047,7 +1047,7 @@ app.post('/api/admin/code-requests/:id/approve', verifyToken, requireRole(MANAGE
     insert.run(code, role);
 
     // Update the request
-    db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime("now") WHERE id = ?').run('approved', code, requestId);
+    db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime(\'now\') WHERE id = ?').run('approved', code, requestId);
 
     res.json({ code, message: 'Request approved and code generated' });
   } catch (err) {
@@ -1101,7 +1101,7 @@ app.post('/api/admin/code-requests/approve-all/pending', verifyToken, requireRol
         insert.run(code, 'general'); // Default to general
 
         // Update the request
-        db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime("now"), auto = 1 WHERE id = ?').run('approved', code, request.id);
+        db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime(\'now\'), auto = 1 WHERE id = ?').run('approved', code, request.id);
         approvedCount++;
       }
     }
@@ -1387,7 +1387,7 @@ function autoApproveRequestsJob() {
         insert.run(code, 'general');
 
         // Update the request
-        db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime("now"), auto = 1 WHERE id = ?').run('approved', code, request.id);
+        db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime(\'now\'), auto = 1 WHERE id = ?').run('approved', code, request.id);
         updated = true;
         console.log(`Auto-approved code request for ${request.name} (${request.phone})`);
       }
