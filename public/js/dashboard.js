@@ -80,6 +80,37 @@ document.addEventListener('DOMContentLoaded', () => {
     setupQuickAccessDrag();
 });
 
+// Simple on-screen logger for visual debugging (visible in UI)
+function uiLog(msg) {
+    try {
+        let log = document.getElementById('devUiLog');
+        if (!log) {
+            log = document.createElement('div');
+            log.id = 'devUiLog';
+            log.style.position = 'fixed';
+            log.style.left = '10px';
+            log.style.bottom = '10px';
+            log.style.zIndex = 2000;
+            log.style.background = 'rgba(0,0,0,0.6)';
+            log.style.color = '#fff';
+            log.style.padding = '8px 10px';
+            log.style.fontSize = '12px';
+            log.style.borderRadius = '6px';
+            log.style.maxWidth = '320px';
+            log.style.maxHeight = '40vh';
+            log.style.overflow = 'auto';
+            log.style.pointerEvents = 'none';
+            document.body.appendChild(log);
+        }
+        const entry = document.createElement('div');
+        entry.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+        entry.style.marginBottom = '4px';
+        log.appendChild(entry);
+        // keep log trimmed
+        while (log.childNodes.length > 30) log.removeChild(log.firstChild);
+    } catch (e) { console.debug('uiLog failed', e); }
+}
+
 function setupScrollNav() {
     const nav = document.querySelector('.navbar');
     if (!nav) return;
@@ -259,6 +290,23 @@ function bindDashboardEventHandlers() {
     // Layout edit
     const layoutEditToggle = document.getElementById('layoutEditToggle');
     if (layoutEditToggle) layoutEditToggle.addEventListener('click', () => document.body.classList.toggle('layout-edit-mode'));
+
+    // Global fallback: close widget when its close button is clicked even if the direct listener didn't bind
+    document.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target && target.closest && target.closest('#widgetCloseBtn')) {
+            try { e.preventDefault(); } catch (err) {}
+            closeWidget();
+        }
+    });
+
+    // Allow ESC to close the floating widget
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            const widget = document.getElementById('floatingWidget');
+            if (widget && !widget.classList.contains('hidden')) closeWidget();
+        }
+    });
 }
 
 
@@ -503,7 +551,7 @@ function initializeFloatingChat() {
         if (clearBtn && userChurch !== 'general') {
             clearBtn.style.display = 'flex';
         }
-        
+        uiLog('initializeFloatingChat: initialized');
         initChatDragResize();
         updateUnreadBadge();
     }
@@ -530,6 +578,7 @@ function initializeFloatingWidget() {
                 widget.setAttribute('aria-hidden', 'true');
                 btn.classList.remove('hidden');
                 btn.setAttribute('aria-expanded', 'false');
+                uiLog('Widget auto-hidden');
             }
         }, 5000);
         widgetInitialized = true;
@@ -537,26 +586,54 @@ function initializeFloatingWidget() {
 }
 
 function toggleWidget() {
+    // Make the widget behave like the Quick Access panel: copy its content
+    // into the right-sidebar and open the panel. This ensures consistent
+    // UX with other slide-over panels.
     const widget = document.getElementById('floatingWidget');
     const btn = document.getElementById('widgetToggleBtn');
-    if (!widget || !btn) return;
-    
-    // Clear any pending auto-hide when user manually toggles
-    if (widgetAutoHideTimeout) {
-        clearTimeout(widgetAutoHideTimeout);
-        widgetAutoHideTimeout = null;
+    const panel = document.querySelector('.right-sidebar');
+    if (!widget || !btn || !panel) return;
+
+    // cancel auto-hide
+    if (widgetAutoHideTimeout) { clearTimeout(widgetAutoHideTimeout); widgetAutoHideTimeout = null; }
+
+    // copy content into panel (preserve header + body)
+    try {
+        const header = widget.querySelector('.floating-widget-header');
+        const body = widget.querySelector('.floating-widget-body');
+        if (header && body) {
+            panel.innerHTML = '';
+            const headerClone = header.cloneNode(true);
+            const bodyClone = body.cloneNode(true);
+            // add a close button similar to other panels
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'panel-close-btn';
+            closeBtn.setAttribute('aria-label', 'Close');
+            closeBtn.textContent = '×';
+            closeBtn.addEventListener('click', closePanels);
+            panel.appendChild(closeBtn);
+            panel.appendChild(headerClone);
+            panel.appendChild(bodyClone);
+        }
+    } catch (e) {
+        console.error('Failed to migrate widget into panel', e);
     }
-    
-    if (widget.classList.contains('hidden')) {
-        widget.classList.remove('hidden');
-        widget.setAttribute('aria-hidden', 'false');
+
+    // Open the panel using the same logic as toggleQuickAccess
+    const opened = panel.classList.toggle('panel-open');
+    const b = ensureBackdrop();
+    if (opened) {
+        b.classList.add('visible');
+        document.body.classList.add('no-scroll');
+        document.body.classList.add('panel-open-active');
         btn.classList.add('hidden');
-        btn.setAttribute('aria-expanded', 'true');
+        uiLog('Widget opened as Quick Access panel');
     } else {
-        widget.classList.add('hidden');
-        widget.setAttribute('aria-hidden', 'true');
+        b.classList.remove('visible');
+        document.body.classList.remove('no-scroll');
+        document.body.classList.remove('panel-open-active');
         btn.classList.remove('hidden');
-        btn.setAttribute('aria-expanded', 'false');
+        uiLog('Widget panel closed');
     }
 }
 
@@ -569,10 +646,17 @@ function closeWidget() {
         clearTimeout(widgetAutoHideTimeout);
         widgetAutoHideTimeout = null;
     }
+    // Defensive hide: add class and force inline style to ensure visibility is removed
+    console.debug('closeWidget() called');
+    uiLog('closeWidget() called');
     widget.classList.add('hidden');
+    widget.style.display = 'none';
     widget.setAttribute('aria-hidden', 'true');
+    // Make sure toggle button is visible and focusable
     btn.classList.remove('hidden');
+    btn.style.display = 'flex';
     btn.setAttribute('aria-expanded', 'false');
+    try { btn.focus(); } catch (e) { /* ignore */ }
 }
 
 // Bible verses for daily memory verse
