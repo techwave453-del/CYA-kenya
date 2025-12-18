@@ -88,13 +88,14 @@ app.use('/api/signup', authLimiter);
 // Helmet security middleware (CSP tailored for current app)
 app.use(helmet({
   crossOriginResourcePolicy: false,
-  contentSecurityPolicy: false // set manually below to avoid blocking inline handlers for now
+  contentSecurityPolicy: false, // set manually below to avoid blocking inline handlers for now
+  frameguard: false // Allow iframe embedding for Replit preview
 }));
 
 // Additional security headers and HSTS in production
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // Removed X-Frame-Options to allow Replit iframe preview
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
@@ -114,7 +115,7 @@ const imgSrc = ["'self'", 'data:'];
 const connectSrc = ["'self'", 'ws:', 'wss:'];
 
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc.join(' ')}; style-src ${styleSrc.join(' ')}; img-src ${imgSrc.join(' ')}; connect-src ${connectSrc.join(' ')}; base-uri 'self'; manifest-src 'self'`);
+  res.setHeader('Content-Security-Policy', `default-src 'self'; script-src ${scriptSrc.join(' ')}; style-src ${styleSrc.join(' ')}; img-src ${imgSrc.join(' ')}; connect-src ${connectSrc.join(' ')}; base-uri 'self'; manifest-src 'self'; frame-ancestors *`);
   next();
 });
 
