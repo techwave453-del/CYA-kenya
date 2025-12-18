@@ -1390,6 +1390,33 @@ function autoApproveRequestsJob() {
 // Start auto-approval job - runs every 2 minutes
 setInterval(autoApproveRequestsJob, 2 * 60 * 1000);
 
+// ==================== USER STATS ENDPOINT ====================
+
+app.get('/api/stats', verifyToken, (req, res) => {
+  try {
+    const username = req.username;
+    const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const postCount = db.prepare('SELECT COUNT(*) as count FROM posts WHERE user_id = ?').get(user.id).count;
+    const commentCount = db.prepare('SELECT COUNT(*) as count FROM comments WHERE user_id = ?').get(user.id).count;
+    const likeCount = db.prepare('SELECT COUNT(*) as count FROM reactions WHERE user_id = ? AND type = "like"').get(user.id).count;
+
+    res.json({
+      username,
+      posts: postCount,
+      comments: commentCount,
+      likes: likeCount,
+      joinDate: user.created_at
+    });
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: 'Failed to load stats' });
+  }
+});
+
 // ==================== SERVER START ====================
 
 server.listen(PORT, () => {
