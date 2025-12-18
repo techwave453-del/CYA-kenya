@@ -77,13 +77,12 @@ body.no-scroll {
 }
 
 .dashboard-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  padding: 20px 360px;
+  display: block;
+  padding: 20px;
   min-height: auto;
   flex: 1;
-  align-items: start;
+  margin-top: 0;
+  width: 100%;
 }
 
 .main-content {
@@ -94,6 +93,9 @@ body.no-scroll {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
   max-height: calc(100vh - 140px);
+  width: 100%;
+  margin: 0 auto;
+  max-width: 1000px;
 }
 
 .main-responsive {
@@ -104,8 +106,6 @@ body.no-scroll {
 
 @media (max-width: 1400px) {
   .dashboard-container {
-    grid-template-columns: 1fr;
-    gap: 16px;
     padding: 20px;
   }
   
@@ -126,6 +126,24 @@ body.no-scroll {
   .right-sidebar.panel-open {
     left: auto;
     right: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px;
+  }
+  
+  .main-content {
+    padding: 16px;
+    max-height: calc(100vh - 120px);
+  }
+  
+  .sidebar,
+  .right-sidebar {
+    width: 90vw;
+    max-width: 100%;
+    padding: 12px;
   }
 }
 

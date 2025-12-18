@@ -804,7 +804,7 @@ function loadMemoryVerse() {
 function loadDashboardData() {
     loadAnnouncements();
     loadTasks();
-    loadActivities();
+    loadEvents();
     loadChatMessages();
     loadPosts();
     loadOnlineMembers();
@@ -852,7 +852,12 @@ async function loadAnnouncements() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
-        const announcements = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const announcements = Array.isArray(data) ? data : (data.announcements || []);
         
         if (!announcements || announcements.length === 0) {
             list.innerHTML = '<div class="empty-state">No announcements yet</div>';
@@ -889,7 +894,12 @@ async function loadTasks() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
-        let tasks = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        let tasks = Array.isArray(data) ? data : (data.tasks || []);
         const list = document.getElementById('tasksList');
         const canManage = managementRoles.includes(userChurch);
         
@@ -925,7 +935,7 @@ async function loadTasks() {
     }
 }
 
-async function loadActivities() {
+async function loadEvents() {
     const newEventBtn = document.getElementById('newEventBtn');
     const missionStatement = document.getElementById('missionStatement');
     const canManageEvents = managementRoles.includes(userChurch);
@@ -943,7 +953,12 @@ async function loadActivities() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
-        let events = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        let events = Array.isArray(data) ? data : (data.events || []);
         
         const list = document.getElementById('activitiesList');
         
@@ -1006,7 +1021,12 @@ async function loadPosts() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
-        let posts = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        let posts = Array.isArray(data) ? data : (data.posts || []);
         const list = document.getElementById('postsList');
         
         if (!posts || posts.length === 0) {
