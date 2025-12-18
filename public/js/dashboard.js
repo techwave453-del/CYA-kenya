@@ -80,35 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupQuickAccessDrag();
 });
 
-// Simple on-screen logger for visual debugging (visible in UI)
-function uiLog(msg) {
-    try {
-        let log = document.getElementById('devUiLog');
-        if (!log) {
-            log = document.createElement('div');
-            log.id = 'devUiLog';
-            log.style.position = 'fixed';
-            log.style.left = '10px';
-            log.style.bottom = '10px';
-            log.style.zIndex = 2000;
-            log.style.background = 'rgba(0,0,0,0.6)';
-            log.style.color = '#fff';
-            log.style.padding = '8px 10px';
-            log.style.fontSize = '12px';
-            log.style.borderRadius = '6px';
-            log.style.maxWidth = '320px';
-            log.style.maxHeight = '40vh';
-            log.style.overflow = 'auto';
-            log.style.pointerEvents = 'none';
-            document.body.appendChild(log);
-        }
-        const entry = document.createElement('div');
-        entry.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
-        entry.style.marginBottom = '4px';
-        log.appendChild(entry);
-        // keep log trimmed
-        while (log.childNodes.length > 30) log.removeChild(log.firstChild);
-    } catch (e) { console.debug('uiLog failed', e); }
+// uiLog disabled: remove on-screen debug console for widgets
+function uiLog(/* msg */) {
+    // intentionally left empty to disable the dev UI logger
 }
 
 function setupScrollNav() {
@@ -563,26 +537,58 @@ function initializeFloatingWidget() {
     const widget = document.getElementById('floatingWidget');
     const btn = document.getElementById('widgetToggleBtn');
     
-    if (widget && btn) {
-        // Show widget initially
-        widget.classList.remove('hidden');
-        widget.setAttribute('aria-hidden', 'false');
-        btn.classList.add('hidden');
-        btn.setAttribute('aria-expanded', 'false');
-        
-        // Schedule auto-hide after 5 seconds (store timeout ID to avoid races)
-        if (widgetAutoHideTimeout) clearTimeout(widgetAutoHideTimeout);
-        widgetAutoHideTimeout = setTimeout(() => {
-            if (widget && !widget.classList.contains('hidden')) {
-                widget.classList.add('hidden');
-                widget.setAttribute('aria-hidden', 'true');
-                btn.classList.remove('hidden');
-                btn.setAttribute('aria-expanded', 'false');
-                uiLog('Widget auto-hidden');
-            }
-        }, 5000);
-        widgetInitialized = true;
+    if (!widget || !btn) return;
+
+    // Default: do not auto-show the widget on every page load.
+    // Show the widget only when the login flow indicates it should appear.
+    const showOnLogin = (function() {
+        try { return localStorage.getItem('showDailyVerseOnLogin') === '1'; } catch (e) { return false; }
+    })();
+
+    // Ensure widget starts hidden by default
+    widget.classList.add('hidden');
+    widget.style.display = 'none';
+    widget.setAttribute('aria-hidden', 'true');
+    btn.classList.remove('hidden');
+    btn.setAttribute('aria-expanded', 'false');
+
+    if (showOnLogin) {
+        // Show only the memory verse area for the login popup
+        const body = widget.querySelector('.floating-widget-body');
+        const ann = body ? body.querySelector('.announcements-wrapper') : null;
+        const savedAnnDisplay = ann ? ann.style.display : '';
+
+        try {
+            // show widget
+            widget.classList.remove('hidden');
+            widget.style.display = 'flex';
+            widget.setAttribute('aria-hidden', 'false');
+            btn.classList.add('hidden');
+            btn.setAttribute('aria-expanded', 'true');
+
+            // hide announcements temporarily so only today's verse shows
+            if (ann) ann.style.display = 'none';
+
+            // Auto-hide after a few seconds and restore announcements display
+            if (widgetAutoHideTimeout) clearTimeout(widgetAutoHideTimeout);
+            widgetAutoHideTimeout = setTimeout(() => {
+                if (widget && !widget.classList.contains('hidden')) {
+                    widget.classList.add('hidden');
+                    widget.style.display = 'none';
+                    widget.setAttribute('aria-hidden', 'true');
+                    btn.classList.remove('hidden');
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+                // restore announcements
+                if (ann) ann.style.display = savedAnnDisplay || '';
+            }, 5000);
+        } finally {
+            // clear the flag so it doesn't show again until next login
+            try { localStorage.removeItem('showDailyVerseOnLogin'); } catch (e) { }
+        }
     }
+
+    widgetInitialized = true;
 }
 
 // Simple drag for floating widget header
@@ -2313,12 +2319,10 @@ function toggleQuickAccess() {
         b.classList.add('visible');
         document.body.classList.add('no-scroll');
         document.body.classList.add('panel-open-active');
-        _syncWidgetWithPanel(true);
     } else {
         b.classList.remove('visible');
         document.body.classList.remove('no-scroll');
         document.body.classList.remove('panel-open-active');
-        _syncWidgetWithPanel(false);
     }
 }
 

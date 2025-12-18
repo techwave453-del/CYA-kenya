@@ -288,6 +288,9 @@ async function handleLogin() {
       localStorage.setItem('userChurch', data.church);
     }
 
+    // Mark that the daily verse should be shown on the next page load (dashboard)
+    try { localStorage.setItem('showDailyVerseOnLogin', '1'); } catch (e) { }
+
     showSuccess('Login successful! Redirecting...');
     
     setTimeout(() => {
@@ -354,6 +357,9 @@ async function handleSignup() {
     if (data.church) {
       localStorage.setItem('userChurch', data.church);
     }
+
+    // Mark that the daily verse should be shown on the next page load (dashboard)
+    try { localStorage.setItem('showDailyVerseOnLogin', '1'); } catch (e) { }
 
     showSuccess('Account created successfully! Redirecting...');
     
