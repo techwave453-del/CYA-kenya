@@ -173,28 +173,45 @@ function requireRole(allowedRoles) {
 // Signup
 app.post('/api/signup', async (req, res) => {
   try {
-    const { username, password, role = ROLES.GENERAL } = req.body;
+    const { username, password, registrationCode } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password required' });
+    if (!username || !password || !registrationCode) {
+      return res.status(400).json({ message: 'Username, password and registration code required' });
     }
 
-    // Check if user exists
-    if (dbHelpers.getUserByUsername(username)) {
+    // Normalize username
+    const normalizedUsername = username.trim().toLowerCase();
+
+    // Check if username exists
+    if (dbHelpers.getUserByUsername(normalizedUsername)) {
       return res.status(409).json({ message: 'Username already exists' });
     }
 
-    // Hash password
-    const hashedPassword = await dbHelpers.hashPassword(password);
+    // Validate registration code
+    const codeRow = db.prepare('SELECT * FROM registration_codes WHERE code = ?').get(registrationCode);
+    if (!codeRow) {
+      return res.status(400).json({ message: 'Invalid registration code' });
+    }
 
-    // Create user
-    const user = dbHelpers.createUser(username, hashedPassword, role);
-    const token = dbHelpers.generateToken(user.id, username);
+    if (codeRow.used) {
+      return res.status(400).json({ message: 'Registration code already used' });
+    }
+
+    // Hash password and create user with role from code
+    const hashedPassword = await dbHelpers.hashPassword(password);
+    const role = codeRow.role || ROLES.GENERAL;
+
+    const user = dbHelpers.createUser(normalizedUsername, hashedPassword, role);
+
+    // Mark registration code as used
+    db.prepare('UPDATE registration_codes SET used = 1, used_by = ? WHERE id = ?').run(user.id, codeRow.id);
+
+    const token = dbHelpers.generateToken(user.id, normalizedUsername);
 
     res.status(201).json({
       message: 'User created successfully',
       token,
-      username,
+      username: normalizedUsername,
       role
     });
   } catch (err) {
@@ -202,6 +219,12 @@ app.post('/api/signup', async (req, res) => {
     res.status(500).json({ message: err.message || 'Signup failed' });
   }
 });
+      
+      // Remove from online users list if authenticated
+      if (socket.username && onlineUsers.includes(socket.username)) {
+        onlineUsers = onlineUsers.filter(u => u !== socket.username);
+        io.emit('onlineUsers', onlineUsers);
+      }
 
 // Login
 app.post('/api/login', async (req, res) => {
@@ -236,6 +259,107 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Validate registration code (used by frontend realtime validation)
+app.post('/api/validate-code', (req, res) => {
+  try {
+    const { registrationCode } = req.body;
+    if (!registrationCode) return res.status(400).json({ valid: false, error: 'Registration code required' });
+
+    const codeRow = db.prepare('SELECT * FROM registration_codes WHERE code = ?').get(registrationCode);
+    if (!codeRow) return res.json({ valid: false, error: 'Invalid registration code' });
+    if (codeRow.used) return res.json({ valid: false, error: 'Code already used' });
+
+    res.json({ valid: true, role: codeRow.role || ROLES.GENERAL });
+  } catch (err) {
+    console.error('Validate code error:', err);
+    res.status(500).json({ valid: false, error: 'Validation failed' });
+  }
+});
+
+// Request a registration code (public) - stored for admin review
+app.post('/api/code-request', (req, res) => {
+  try {
+    const { name, phone, church } = req.body;
+    if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
+
+    const stmt = db.prepare('INSERT INTO code_requests (name, phone, church, status) VALUES (?, ?, ?, ?)');
+    stmt.run(name.trim(), phone.trim(), church ? church.trim() : null, 'pending');
+
+    res.json({ message: 'Request submitted' });
+  } catch (err) {
+    console.error('Code request error:', err);
+    res.status(500).json({ error: 'Failed to submit request' });
+  }
+});
+
+// Check approval (frontend polls to see if request has been approved)
+app.post('/api/check-approval', (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
+
+    const row = db.prepare('SELECT * FROM code_requests WHERE name = ? AND phone = ? ORDER BY created_at DESC').get(name.trim(), phone.trim());
+    if (!row) return res.json({ approved: false });
+
+    if (row.status === 'approved' && row.code_assigned) {
+      return res.json({ approved: true, code: row.code_assigned, church: row.church });
+    }
+
+    res.json({ approved: false });
+  } catch (err) {
+    console.error('Check approval error:', err);
+    res.status(500).json({ error: 'Check failed' });
+  }
+});
+
+// PROFILE: update username
+app.put('/api/profile/username', verifyToken, async (req, res) => {
+  try {
+    const { newUsername, password } = req.body;
+    if (!newUsername || !password) return res.status(400).json({ error: 'New username and password required' });
+    if (newUsername.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
+
+    const userRow = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+    if (!userRow) return res.status(404).json({ error: 'User not found' });
+
+    const passwordMatch = await dbHelpers.verifyPassword(password, userRow.password);
+    if (!passwordMatch) return res.status(401).json({ error: 'Invalid password' });
+
+    const normalizedNew = newUsername.trim().toLowerCase();
+    const existing = dbHelpers.getUserByUsername(normalizedNew);
+    if (existing && existing.id !== req.userId) return res.status(400).json({ error: 'Username already taken' });
+
+    dbHelpers.updateUsername(req.userId, normalizedNew);
+    res.json({ message: 'Username updated successfully', username: normalizedNew });
+  } catch (err) {
+    console.error('Profile username update error:', err);
+    res.status(500).json({ error: 'Failed to update username' });
+  }
+});
+
+// PROFILE: update password
+app.put('/api/profile/password', verifyToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters' });
+
+    const userRow = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+    if (!userRow) return res.status(404).json({ error: 'User not found' });
+
+    const passwordMatch = await dbHelpers.verifyPassword(currentPassword, userRow.password);
+    if (!passwordMatch) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    const hashed = await dbHelpers.hashPassword(newPassword);
+    dbHelpers.updatePassword(req.userId, hashed);
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Profile password update error:', err);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
 // Get user profile
 app.get('/api/user', verifyToken, (req, res) => {
   try {
@@ -256,12 +380,51 @@ app.get('/api/user', verifyToken, (req, res) => {
   }
 });
 
+// Get online members (for dashboard members list)
+app.get('/api/online-members', verifyToken, (req, res) => {
+  try {
+    const users = dbHelpers.getAllUsers();
+    const members = users.map(u => ({
+      id: u.id,
+      name: u.username,
+      church: u.church || 'general',
+      role: u.role || 'general',
+      online: false
+    }));
+    res.json({ members });
+  } catch (err) {
+    console.error('Get online members error:', err);
+    res.status(500).json({ message: 'Error fetching members' });
+  }
+});
+
 // ==================== POSTS ENDPOINTS ====================
 
 // Get all posts
 app.get('/api/posts', (req, res) => {
   try {
-    const posts = dbHelpers.getAllPosts();
+    const raw = dbHelpers.getAllPosts();
+    // Map DB columns to frontend-friendly schema
+    const posts = raw.map(p => {
+      const reactions = dbHelpers.getReactionsSummary(p.id);
+      const comments = dbHelpers.getCommentsByPostId(p.id) || [];
+      return {
+        id: p.id,
+        author: p.username || p.author || 'unknown',
+        role: p.role || 'general',
+        content: p.content,
+        image: p.image_url || null,
+        imageAlt: p.image_alt || null,
+        caption: p.caption || null,
+        createdAt: p.created_at,
+        likes: reactions.likes || 0,
+        loves: reactions.loves || 0,
+        likedBy: reactions.likedBy || [],
+        lovedBy: reactions.lovedBy || [],
+        comments: comments.map(c => ({ id: c.id, author: c.author, text: c.text, createdAt: c.created_at }))
+      };
+    });
+
     res.json(posts);
   } catch (err) {
     console.error('Get posts error:', err);
@@ -280,10 +443,27 @@ app.post('/api/posts', verifyToken, (req, res) => {
 
     const postId = dbHelpers.createPost(req.userId, content, image, imageAlt, caption);
 
-    res.status(201).json({
-      id: postId,
-      message: 'Post created successfully'
-    });
+    // Fetch created post and emit real-time event
+    const postRow = db.prepare('SELECT p.*, u.username, u.role FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?').get(postId);
+    const post = {
+      id: postRow.id,
+      author: postRow.username,
+      role: postRow.role,
+      content: postRow.content,
+      image: postRow.image_url,
+      imageAlt: postRow.image_alt,
+      caption: postRow.caption,
+      createdAt: postRow.created_at,
+      likes: 0,
+      loves: 0,
+      likedBy: [],
+      lovedBy: [],
+      comments: []
+    };
+
+    io.emit('newPost', post);
+
+    res.status(201).json({ id: postId, success: true });
   } catch (err) {
     console.error('Create post error:', err);
     res.status(500).json({ message: 'Error creating post' });
@@ -297,7 +477,7 @@ app.put('/api/posts/:id', verifyToken, (req, res) => {
     
     dbHelpers.updatePost(req.params.id, content, image, caption, imageAlt);
 
-    res.json({ message: 'Post updated successfully' });
+    res.json({ success: true });
   } catch (err) {
     console.error('Update post error:', err);
     res.status(500).json({ message: 'Error updating post' });
@@ -308,10 +488,51 @@ app.put('/api/posts/:id', verifyToken, (req, res) => {
 app.delete('/api/posts/:id', verifyToken, (req, res) => {
   try {
     dbHelpers.deletePost(req.params.id);
-    res.json({ message: 'Post deleted successfully' });
+    res.json({ success: true });
   } catch (err) {
     console.error('Delete post error:', err);
     res.status(500).json({ message: 'Error deleting post' });
+  }
+});
+
+// Add comment to a post
+app.post('/api/posts/:id/comment', verifyToken, (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
+
+    const user = dbHelpers.getUserById(req.userId);
+    const author = user ? user.username : 'anonymous';
+    const comment = dbHelpers.addComment(req.params.id, req.userId, author, text.trim());
+
+    // Broadcast new comment
+    io.emit('postComment', { postId: req.params.id, comment });
+
+    res.json({ success: true, comment });
+  } catch (err) {
+    console.error('Add comment error:', err);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+// Like/Love posts
+app.post('/api/posts/:id/like', verifyToken, (req, res) => {
+  try {
+    const { type } = req.body; // 'like' or 'love'
+    if (!type) return res.status(400).json({ error: 'Reaction type required' });
+
+    const user = dbHelpers.getUserById(req.userId);
+    const username = user ? user.username : 'anonymous';
+
+    const summary = dbHelpers.toggleReaction(req.params.id, req.userId, username, type);
+
+    // Broadcast like update
+    io.emit('postLiked', { postId: req.params.id, likes: summary.likes, loves: summary.loves, likedBy: summary.likedBy, lovedBy: summary.lovedBy });
+
+    res.json({ success: true, likes: summary.likes, loves: summary.loves });
+  } catch (err) {
+    console.error('Like post error:', err);
+    res.status(500).json({ error: 'Failed to like post' });
   }
 });
 
@@ -320,7 +541,15 @@ app.delete('/api/posts/:id', verifyToken, (req, res) => {
 // Get all tasks
 app.get('/api/tasks', (req, res) => {
   try {
-    const tasks = dbHelpers.getAllTasks();
+    const raw = dbHelpers.getAllTasks();
+    const tasks = raw.map(t => ({
+      id: t.id,
+      title: t.title,
+      assignee: t.assigned_to_username || t.assigned_to || null,
+      priority: t.priority,
+      status: t.status,
+      createdAt: t.created_at
+    }));
     res.json(tasks);
   } catch (err) {
     console.error('Get tasks error:', err);
@@ -379,7 +608,17 @@ app.delete('/api/tasks/:id', verifyToken, requireRole(MANAGEMENT_ROLES), (req, r
 // Get all events
 app.get('/api/events', (req, res) => {
   try {
-    const events = dbHelpers.getAllEvents();
+    const raw = dbHelpers.getAllEvents();
+    // Map DB fields to frontend expected shape (date)
+    const events = raw.map(e => ({
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      date: e.event_date || e.date || null,
+      createdBy: e.created_by_username || null,
+      createdAt: e.created_at
+    }));
+
     res.json(events);
   } catch (err) {
     console.error('Get events error:', err);
@@ -438,7 +677,16 @@ app.delete('/api/events/:id', verifyToken, requireRole(MANAGEMENT_ROLES), (req, 
 // Get all announcements
 app.get('/api/announcements', (req, res) => {
   try {
-    const announcements = dbHelpers.getAllAnnouncements();
+    const raw = dbHelpers.getAllAnnouncements();
+    const announcements = raw.map(a => ({
+      id: a.id,
+      title: a.title,
+      content: a.content,
+      date: a.announcement_date || a.date || null,
+      createdBy: a.created_by_username || null,
+      createdAt: a.created_at
+    }));
+
     res.json(announcements);
   } catch (err) {
     console.error('Get announcements error:', err);
@@ -590,6 +838,27 @@ app.get('/api/admin/codes', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), (req
   }
 });
 
+// Public: list members and whether they are currently online
+app.get('/api/online-members', (req, res) => {
+  try {
+    // Fetch basic member list from users table
+    const users = db.prepare('SELECT id, username, church FROM users ORDER BY username ASC').all();
+    const onlineSet = new Set(Object.values(connectedUsers).filter(Boolean));
+
+    const members = users.map(u => ({
+      id: u.id,
+      name: u.username,
+      church: u.church || 'Unknown',
+      online: onlineSet.has(u.username)
+    }));
+
+    res.json({ members });
+  } catch (err) {
+    console.error('Get online members error:', err);
+    res.status(500).json({ message: 'Error fetching members' });
+  }
+});
+
 // Delete a registration code (system admin only)
 app.delete('/api/admin/codes/:code', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), (req, res) => {
   try {
@@ -711,9 +980,10 @@ app.get('/api/admin/password-resets', verifyToken, requireRole(MANAGEMENT_ROLES)
 
 // ==================== SOCKET.IO EVENTS ====================
 
+let onlineUsers = []; // Track connected user list
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
-
   socket.on('join', (username) => {
     connectedUsers[socket.id] = username;
     io.emit('users-online', Object.keys(connectedUsers).length);
@@ -723,18 +993,52 @@ io.on('connection', (socket) => {
     });
   });
 
+  // New handler: authenticate user and add to online list
+  socket.on('authenticate', (username) => {
+    if (username && !onlineUsers.includes(username)) {
+      onlineUsers.push(username);
+      socket.username = username;
+    }
+    // Broadcast updated online users list
+    io.emit('onlineUsers', onlineUsers);
+  });
+
+  // New handler: client requests current online users list
+  socket.on('requestOnlineUsers', () => {
+    socket.emit('onlineUsers', onlineUsers);
+  });
+
+  // Newer frontend uses 'authenticate' to register username
+  socket.on('authenticate', (username) => {
+    if (username) {
+      connectedUsers[socket.id] = username;
+    }
+    // emit updated online users list expected by frontend
+    const onlineList = Object.values(connectedUsers).filter(Boolean);
+    io.emit('onlineUsers', onlineList);
+  });
+
+  // Frontend may request current online users explicitly
+  socket.on('requestOnlineUsers', () => {
+    const onlineList = Object.values(connectedUsers).filter(Boolean);
+    socket.emit('onlineUsers', onlineList);
+  });
+
   socket.on('send-message', (data) => {
-    const { username, content } = data;
+    const { username, content, userId } = data;
     
     try {
-      // Save message to database
-      dbHelpers.createMessage(data.userId || 0, username, content);
+      // Save message to database and return id
+      const id = dbHelpers.createMessage(userId || 0, username, content);
+      const createdAt = new Date().toISOString();
 
-      // Broadcast to all clients
-      io.emit('receive-message', {
+      // Broadcast to all clients with consistent payload expected by frontend
+      io.emit('newMessage', {
+        id,
+        userId: userId || 0,
         username,
         content,
-        timestamp: new Date().toISOString()
+        createdAt
       });
     } catch (err) {
       console.error('Error saving message:', err);
@@ -746,6 +1050,8 @@ io.on('connection', (socket) => {
     delete connectedUsers[socket.id];
     
     io.emit('users-online', Object.keys(connectedUsers).length);
+    // emit onlineUsers array as frontend expects
+    io.emit('onlineUsers', Object.values(connectedUsers).filter(Boolean));
     if (username) {
       io.emit('user-left', {
         username,
@@ -760,6 +1066,24 @@ io.on('connection', (socket) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ==================== ONLINE MEMBERS ====================
+
+app.get('/api/online-members', verifyToken, (req, res) => {
+  try {
+    const users = dbHelpers.getAllUsers();
+    const members = users.map(u => ({
+      name: u.username,
+      online: onlineUsers.includes(u.username),
+      church: u.church || 'Unknown',
+      role: u.role || 'general'
+    }));
+    res.json({ members });
+  } catch (err) {
+    console.error('Online members error:', err);
+    res.status(500).json({ error: 'Failed to fetch online members' });
+  }
 });
 
 // ==================== SERVER START ====================

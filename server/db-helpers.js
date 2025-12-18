@@ -53,6 +53,18 @@ function updateUserRole(userId, role) {
     return stmt.run(role, userId);
 }
 
+// Update username (ensure uniqueness enforced at DB level)
+function updateUsername(userId, newUsername) {
+    const stmt = db.prepare('UPDATE users SET username = ? WHERE id = ?');
+    return stmt.run(newUsername, userId);
+}
+
+// Update password (expects hashed password)
+function updatePassword(userId, hashedPassword) {
+    const stmt = db.prepare('UPDATE users SET password = ? WHERE id = ?');
+    return stmt.run(hashedPassword, userId);
+}
+
 // ==================== POST OPERATIONS ====================
 
 // Get all posts with username
@@ -62,6 +74,11 @@ function getAllPosts() {
         JOIN users u ON p.user_id = u.id
         ORDER BY p.created_at DESC
     `).all();
+}
+
+// Helper to fetch a single post with author info
+function getPostById(postId) {
+    return db.prepare('SELECT p.*, u.username, u.role FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?').get(postId);
 }
 
 // Create post
@@ -218,6 +235,51 @@ function clearOldMessages(daysToKeep = 7) {
     return stmt.run(daysToKeep);
 }
 
+// ==================== COMMENTS & REACTIONS ====================
+
+function getCommentsByPostId(postId) {
+    return db.prepare('SELECT id, post_id, user_id, author, text, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC').all(postId);
+}
+
+function addComment(postId, userId, author, text) {
+    const insert = db.prepare('INSERT INTO comments (post_id, user_id, author, text) VALUES (?, ?, ?, ?)');
+    const result = insert.run(postId, userId || null, author, text);
+    return db.prepare('SELECT id, post_id, user_id, author, text, created_at FROM comments WHERE id = ?').get(result.lastInsertRowid);
+}
+
+function getReactionsSummary(postId) {
+    const rows = db.prepare('SELECT type, username FROM reactions WHERE post_id = ?').all(postId);
+    const summary = { likes: 0, loves: 0, likedBy: [], lovedBy: [] };
+    rows.forEach(r => {
+        if (r.type === 'like') {
+            summary.likes++;
+            summary.likedBy.push(`${r.username}:like`);
+        } else if (r.type === 'love') {
+            summary.loves++;
+            summary.lovedBy.push(`${r.username}:love`);
+        }
+    });
+    return summary;
+}
+
+function toggleReaction(postId, userId, username, type) {
+    // ensure type is 'like' or 'love'
+    if (!['like', 'love'].includes(type)) throw new Error('Invalid reaction type');
+
+    // remove opposite reaction if exists
+    const opposite = type === 'like' ? 'love' : 'like';
+    db.prepare('DELETE FROM reactions WHERE post_id = ? AND username = ? AND type = ?').run(postId, username, opposite);
+
+    const existing = db.prepare('SELECT id FROM reactions WHERE post_id = ? AND username = ? AND type = ?').get(postId, username, type);
+    if (existing) {
+        db.prepare('DELETE FROM reactions WHERE id = ?').run(existing.id);
+    } else {
+        db.prepare('INSERT INTO reactions (post_id, user_id, username, type) VALUES (?, ?, ?, ?)').run(postId, userId || null, username, type);
+    }
+
+    return getReactionsSummary(postId);
+}
+
 // ==================== UTILITY FUNCTIONS ====================
 
 // Generate JWT token
@@ -259,6 +321,7 @@ module.exports = {
     
     // Posts
     getAllPosts,
+    getPostById,
     createPost,
     updatePost,
     deletePost,
@@ -285,6 +348,16 @@ module.exports = {
     getRecentMessages,
     createMessage,
     clearOldMessages,
+    
+    // Comments & Reactions
+    getCommentsByPostId,
+    addComment,
+    getReactionsSummary,
+    toggleReaction,
+    
+    // Profile updates
+    updateUsername,
+    updatePassword,
     
     // Auth utilities
     generateToken,
