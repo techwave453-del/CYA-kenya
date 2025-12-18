@@ -90,14 +90,21 @@ body.no-scroll {
 
 /* Main content area styling */
 .dashboard-container {
+  /* Use a single centered column for the main content and reserve
+     horizontal space for the fixed side panels on wide screens. This
+     avoids duplication between a grid layout and fixed-position panels
+     while keeping the main column centered. */
   display: grid;
-  grid-template-columns: 320px 1fr 320px;
+  grid-template-columns: 1fr;
   gap: 20px;
-  padding: 20px;
+  /* reserve space for fixed sidebars (left + right)
+     these values should match the sidebar widths + desired gutter */
+  padding: 20px 360px;
   min-height: auto;
   height: auto;
   margin-top: 0;
   flex: 1;
+  align-items: start;
 }
 
 .main-content {
@@ -109,7 +116,8 @@ body.no-scroll {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  max-height: calc(100vh - 80px);
+  /* account for top navigation + some breathing room */
+  max-height: calc(100vh - 140px);
 }
 
 .main-responsive {
@@ -125,6 +133,8 @@ body.no-scroll {
     gap: 16px;
     min-height: auto;
     height: auto;
+    /* remove large side padding reserved for fixed sidebars on smaller screens */
+    padding: 20px;
   }
   
   .sidebar,
@@ -192,6 +202,7 @@ body.no-scroll {
    =============================== */
 
 #floatingChat {
+  position: fixed;
   width: 360px;
   height: 520px;
   background: rgba(255, 255, 255, 0.06);
@@ -201,6 +212,8 @@ body.no-scroll {
   z-index: var(--z-chat);
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 #floatingChat.maximized {
@@ -436,8 +449,11 @@ body.no-scroll {
    =============================== */
 
 .floating-widget {
+  position: fixed;
   width: 300px;
   min-height: 220px;
+  bottom: 240px;
+  right: 22px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
@@ -578,8 +594,9 @@ body.no-scroll {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar { left: -340px; }
-.right-sidebar { right: -340px; }
+/* hide off-canvas by slightly more than the panel width to avoid visible artifacts */
+.sidebar { left: -360px; }
+.right-sidebar { right: -360px; }
 
 .sidebar.panel-open { left: 20px; }
 .right-sidebar.panel-open { right: 20px; }
@@ -1174,7 +1191,16 @@ body.layout-edit-mode::before {
     left: 10px;
     border-radius: 12px 12px 0 0;
   }
-  .floating-chat-resize { display: none; }
+  .floating-chat-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(79, 140, 255, 0.4) 50%);
+  border-radius: 0 0 18px 0;
+}
 
   /* Toasts adapt to mobile */
   .notification-container {

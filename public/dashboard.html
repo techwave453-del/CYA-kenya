@@ -43,7 +43,7 @@
         </button>
     </nav>
 
-    <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Mobile Navigation" aria-hidden="true">
         <a href="game.html" class="mobile-nav-link">📖 Bible Trivia</a>
         <a href="games.html" class="mobile-nav-link">🎮 Bible Games</a>
         <a href="dashboard.html" class="mobile-nav-link">📊 Dashboard</a>
@@ -57,7 +57,7 @@
         <!-- Dashboard Container -->
         <div id="dashboardContainer" class="dashboard-container">
             <!-- Sidebar -->
-            <aside class="sidebar">
+            <aside class="sidebar" role="complementary" aria-label="Member Sidebar">
                 <button type="button" class="panel-close-btn" aria-label="Close Sidebar">×</button>
                 <div class="sidebar-section">
                     <h3>Member Role</h3>
@@ -152,7 +152,7 @@
             </main>
 
             <!-- Right Sidebar - Quick Access -->
-            <aside class="right-sidebar">
+            <aside class="right-sidebar" role="complementary" aria-label="Quick Access">
                     <button type="button" class="panel-close-btn" aria-label="Close Quick Access">×</button>
                 <div class="sidebar-section">
                     <h3>⚡ Quick Access</h3>
@@ -175,7 +175,7 @@
     </div>
 
     <!-- Floating Chat Widget -->
-    <div id="floatingChat" class="floating-chat" style="display: none;">
+    <div id="floatingChat" class="floating-chat" style="display: none;" role="dialog" aria-label="Group Chat" aria-hidden="true">
         <div class="floating-chat-header" id="chatDragHandle">
             <div class="chat-title-bar">
                 <h3>💬 Group Chat</h3>
@@ -235,7 +235,7 @@
     </div>
     
     <!-- Floating Widget for Memory Verse and Announcements -->
-    <div id="floatingWidget" class="floating-widget">
+    <div id="floatingWidget" class="floating-widget" role="region" aria-label="Daily Inspiration and Announcements" aria-hidden="false">
         <div class="floating-widget-header">
             <h3>📖 Daily Inspiration & Announcements</h3>
             <button type="button" id="widgetCloseBtn" class="widget-close-btn" title="Close" aria-label="Close widget">×</button>

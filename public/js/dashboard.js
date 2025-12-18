@@ -286,6 +286,9 @@ let isDragging = false;
 let isResizing = false;
 let dragOffset = { x: 0, y: 0 };
 let chatState = { isOpen: false, isMinimized: false, isMaximized: false };
+let chatDragInitialized = false;
+let widgetAutoHideTimeout = null;
+let widgetInitialized = false;
 
 function saveChatState() {
     localStorage.setItem('chatState', JSON.stringify(chatState));
@@ -313,11 +316,15 @@ function toggleChat() {
         chatState.isOpen = true;
         unreadMessageCount = 0;
         updateUnreadBadge();
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (chat) chat.setAttribute('aria-hidden', 'false');
     } else {
         chat.style.display = 'none';
         btn.classList.remove('hidden');
         isChatOpen = false;
         chatState.isOpen = false;
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (chat) chat.setAttribute('aria-hidden', 'true');
     }
     saveChatState();
 }
@@ -367,6 +374,7 @@ function closeChat() {
 }
 
 function initChatDragResize() {
+    if (chatDragInitialized) return;
     const chat = document.getElementById('floatingChat');
     const header = document.getElementById('chatDragHandle');
     const resizeHandle = document.getElementById('chatResizeHandle');
@@ -384,9 +392,18 @@ function initChatDragResize() {
     function startDrag(e) {
         if (e.target.closest && e.target.closest('.chat-control-btn')) return;
         const { x, y } = getClientXY(e);
+        // Use bounding rect to compute offsets so elements positioned with 'right' still work
+        const rect = chat.getBoundingClientRect();
+        // Ensure explicit left/top are set so subsequent offsetLeft uses are consistent
+        if (!chat.style.left || chat.style.left === 'auto') {
+            chat.style.left = rect.left + 'px';
+            chat.style.top = rect.top + 'px';
+            chat.style.right = 'auto';
+            chat.style.bottom = 'auto';
+        }
         isDragging = true;
-        dragOffset.x = x - chat.offsetLeft;
-        dragOffset.y = y - chat.offsetTop;
+        dragOffset.x = x - rect.left;
+        dragOffset.y = y - rect.top;
         // prevent touch scrolling while dragging
         if (e.type && e.type.startsWith('touch')) e.preventDefault();
     }
@@ -394,6 +411,7 @@ function initChatDragResize() {
     function onMove(e) {
         const { x, y } = getClientXY(e);
         if (isDragging) {
+            // compute based on viewport and current offsets
             let nx = x - dragOffset.x;
             let ny = y - dragOffset.y;
             nx = Math.max(0, Math.min(nx, window.innerWidth - chat.offsetWidth));
@@ -405,10 +423,11 @@ function initChatDragResize() {
         }
 
         if (isResizing) {
-            let newWidth = x - chat.offsetLeft;
-            let newHeight = y - chat.offsetTop;
-            newWidth = Math.max(300, Math.min(newWidth, window.innerWidth - chat.offsetLeft - 10));
-            newHeight = Math.max(350, Math.min(newHeight, window.innerHeight - chat.offsetTop - 10));
+            const rect = chat.getBoundingClientRect();
+            let newWidth = x - rect.left;
+            let newHeight = y - rect.top;
+            newWidth = Math.max(300, Math.min(newWidth, window.innerWidth - rect.left - 10));
+            newHeight = Math.max(200, Math.min(newHeight, window.innerHeight - rect.top - 10));
             chat.style.width = newWidth + 'px';
             chat.style.height = newHeight + 'px';
         }
@@ -437,6 +456,7 @@ function initChatDragResize() {
         resizeHandle.addEventListener('touchstart', (e) => { isResizing = true; e.preventDefault(); }, { passive: false });
         resizeHandle.addEventListener('pointerdown', (e) => { isResizing = true; e.preventDefault(); });
     }
+    chatDragInitialized = true;
 }
 
 // Show chat on load
@@ -491,42 +511,68 @@ function initializeFloatingChat() {
 
 // Initialize Floating Widget
 function initializeFloatingWidget() {
+    if (widgetInitialized) return; // prevent double-init
     const widget = document.getElementById('floatingWidget');
     const btn = document.getElementById('widgetToggleBtn');
     
     if (widget && btn) {
         // Show widget initially
         widget.classList.remove('hidden');
+        widget.setAttribute('aria-hidden', 'false');
         btn.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
         
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            if (!widget.classList.contains('hidden')) {
+        // Schedule auto-hide after 5 seconds (store timeout ID to avoid races)
+        if (widgetAutoHideTimeout) clearTimeout(widgetAutoHideTimeout);
+        widgetAutoHideTimeout = setTimeout(() => {
+            if (widget && !widget.classList.contains('hidden')) {
                 widget.classList.add('hidden');
+                widget.setAttribute('aria-hidden', 'true');
                 btn.classList.remove('hidden');
+                btn.setAttribute('aria-expanded', 'false');
             }
         }, 5000);
+        widgetInitialized = true;
     }
 }
 
 function toggleWidget() {
     const widget = document.getElementById('floatingWidget');
     const btn = document.getElementById('widgetToggleBtn');
+    if (!widget || !btn) return;
+    
+    // Clear any pending auto-hide when user manually toggles
+    if (widgetAutoHideTimeout) {
+        clearTimeout(widgetAutoHideTimeout);
+        widgetAutoHideTimeout = null;
+    }
     
     if (widget.classList.contains('hidden')) {
         widget.classList.remove('hidden');
+        widget.setAttribute('aria-hidden', 'false');
         btn.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'true');
     } else {
         widget.classList.add('hidden');
+        widget.setAttribute('aria-hidden', 'true');
         btn.classList.remove('hidden');
+        btn.setAttribute('aria-expanded', 'false');
     }
 }
 
 function closeWidget() {
     const widget = document.getElementById('floatingWidget');
     const btn = document.getElementById('widgetToggleBtn');
+    if (!widget || !btn) return;
+    // Clear any pending auto-hide when user closes
+    if (widgetAutoHideTimeout) {
+        clearTimeout(widgetAutoHideTimeout);
+        widgetAutoHideTimeout = null;
+    }
     widget.classList.add('hidden');
+    widget.setAttribute('aria-hidden', 'true');
     btn.classList.remove('hidden');
+    btn.setAttribute('aria-expanded', 'false');
 }
 
 // Bible verses for daily memory verse
@@ -2058,6 +2104,8 @@ function toggleMobileMenu() {
     if (!mobileNav) return;
     const isActive = mobileNav.classList.toggle('active');
     if (btn) btn.setAttribute('aria-expanded', isActive ? 'true' : 'false');
+    // sync aria-hidden for assistive tech
+    mobileNav.setAttribute('aria-hidden', isActive ? 'false' : 'true');
     if (isActive) {
         const first = mobileNav.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
         if (first && typeof first.focus === 'function') first.focus();

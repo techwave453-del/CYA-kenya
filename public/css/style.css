@@ -212,7 +212,8 @@ body {
 /* Dashboard-specific full-width adjustments */
 body.dashboard-page .container {
   padding: 0;
-  margin-top: 65px;
+  /* ensure container clears the fixed top navbar */
+  margin-top: 72px;
   max-width: 100%;
 }
 
