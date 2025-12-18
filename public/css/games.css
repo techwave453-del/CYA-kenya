@@ -1677,12 +1677,4 @@
     }
 }
 
-.developer-footer {
-    text-align: center;
-    padding: 20px;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.developer-footer strong {
-    color: #ffd700;
-}
+/* developer-footer removed */

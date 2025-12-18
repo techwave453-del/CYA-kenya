@@ -560,14 +560,7 @@ body.dashboard-page {
   text-decoration: underline;
 }
 
-.developer-info,
-.developer-footer {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #f0f0f0;
-  color: #999;
-  font-size: 14px;
-}
+/* developer-info and developer-footer removed */
 
 /* Game Container Styles */
 .game-container {
@@ -1201,12 +1194,7 @@ body.dashboard-page {
     cursor: pointer;
   }
 
-  .developer-info,
-  .developer-footer {
-    font-size: 11px;
-    margin-top: 20px;
-    padding: 10px;
-  }
+  /* developer-info and developer-footer styles removed */
 
   .game-instruction {
     font-size: 12px;

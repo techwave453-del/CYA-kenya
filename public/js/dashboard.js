@@ -70,6 +70,12 @@ const managementRoles = ['system-admin', 'admin', 'moderator', 'chairperson', 's
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
+    // Remove any leftover on-screen debug UI that may have been injected
+    try {
+        const dbg = document.getElementById('devUiLog'); if (dbg && dbg.parentNode) dbg.parentNode.removeChild(dbg);
+        document.querySelectorAll('.dev-ui, .dev-ui-log, .debug-console, .developer-footer, .developer-info').forEach(el => el.remove());
+    } catch (e) { /* ignore */ }
+
     checkAuth();
     setupTabNavigation();
     bindDashboardEventHandlers();
@@ -1603,6 +1609,10 @@ async function sendChatMessage() {
     sendBtn.disabled = true;
     
     try {
+        // Ensure we have a valid auth token (fallback to localStorage)
+        if (!authToken) {
+            try { authToken = localStorage.getItem('authToken'); } catch (e) { authToken = null; }
+        }
         const payload = { message };
         if (replyingToMessageId) {
             payload.replyTo = replyingToMessageId;
