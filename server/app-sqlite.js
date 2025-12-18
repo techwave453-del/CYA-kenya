@@ -12,8 +12,13 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
+
+// Trust proxy for rate limiting (important for dev containers and production behind proxies)
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
 
@@ -193,7 +198,7 @@ app.post('/api/signup', async (req, res) => {
       return res.status(400).json({ message: 'Invalid registration code' });
     }
 
-    if (codeRow.used) {
+    if (!codeRow.multi_use && codeRow.used) {
       return res.status(400).json({ message: 'Registration code already used' });
     }
 
@@ -203,8 +208,14 @@ app.post('/api/signup', async (req, res) => {
 
     const user = dbHelpers.createUser(normalizedUsername, hashedPassword, role);
 
-    // Mark registration code as used
-    db.prepare('UPDATE registration_codes SET used = 1, used_by = ? WHERE id = ?').run(user.id, codeRow.id);
+    // Update registration code usage
+    if (codeRow.multi_use) {
+      // For multi-use codes, increment usage count
+      db.prepare('UPDATE registration_codes SET usage_count = usage_count + 1 WHERE id = ?').run(codeRow.id);
+    } else {
+      // For single-use codes, mark as used
+      db.prepare('UPDATE registration_codes SET used = 1, used_by = ? WHERE id = ?').run(user.id, codeRow.id);
+    }
 
     const token = dbHelpers.generateToken(user.id, normalizedUsername);
 
@@ -219,12 +230,6 @@ app.post('/api/signup', async (req, res) => {
     res.status(500).json({ message: err.message || 'Signup failed' });
   }
 });
-      
-      // Remove from online users list if authenticated
-      if (socket.username && onlineUsers.includes(socket.username)) {
-        onlineUsers = onlineUsers.filter(u => u !== socket.username);
-        io.emit('onlineUsers', onlineUsers);
-      }
 
 // Login
 app.post('/api/login', async (req, res) => {
@@ -256,6 +261,106 @@ app.post('/api/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed' });
+  }
+});
+
+// Check permission for admin access
+app.get('/api/check-permission', verifyToken, (req, res) => {
+  try {
+    const user = dbHelpers.getUserById(req.userId);
+    if (!user) {
+      return res.status(404).json({ allowed: false, error: 'User not found' });
+    }
+
+    // Allow if role is admin or higher (system-admin, admin, etc.)
+    const adminRoles = ['system-admin', 'admin', 'moderator', 'chairperson', 'vice-chair', 'secretary', 'organizing-secretary', 'treasurer'];
+    const allowed = adminRoles.includes(user.role);
+
+    res.json({ allowed });
+  } catch (err) {
+    console.error('Check permission error:', err);
+    res.status(500).json({ allowed: false, error: 'Permission check failed' });
+  }
+});
+
+// Get temporary password for forgot password
+app.post('/api/get-temp-password', (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username required' });
+
+    const user = dbHelpers.getUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Check if there's an active temp password
+    const tempPassword = global.passwordResetRequests?.[username];
+    if (!tempPassword || tempPassword.expiryTime < Date.now()) {
+      return res.status(410).json({ error: 'No active temporary password' });
+    }
+
+    res.json({ tempPassword: tempPassword.tempPassword, remainingSeconds: Math.ceil((tempPassword.expiryTime - Date.now()) / 1000) });
+  } catch (err) {
+    console.error('Get temp password error:', err);
+    res.status(500).json({ error: 'Failed to get temporary password' });
+  }
+});
+
+// Request password reset
+app.post('/api/password-reset-request', (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username required' });
+
+    const user = dbHelpers.getUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Generate temp password
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const expiryTime = Date.now() + (15 * 60 * 1000); // 15 minutes
+
+    if (!global.passwordResetRequests) global.passwordResetRequests = {};
+    global.passwordResetRequests[username] = { tempPassword, expiryTime, requestedAt: new Date() };
+
+    res.json({ message: 'Password reset request submitted. An admin will generate a temporary password.' });
+  } catch (err) {
+    console.error('Password reset request error:', err);
+    res.status(500).json({ error: 'Failed to request password reset' });
+  }
+});
+
+// Get game categories
+app.get('/api/categories', verifyToken, (req, res) => {
+  try {
+    // For now, return some dummy categories
+    const categories = [
+      { id: 1, name: 'Bible Knowledge', icon: '📖' },
+      { id: 2, name: 'Christian History', icon: '⏳' },
+      { id: 3, name: 'Worship Songs', icon: '🎵' },
+      { id: 4, name: 'Church Doctrine', icon: '⛪' }
+    ];
+    res.json({ categories });
+  } catch (err) {
+    console.error('Categories error:', err);
+    res.status(500).json({ error: 'Failed to load categories' });
+  }
+});
+
+// Get a question for the game
+app.get('/api/get-question', verifyToken, (req, res) => {
+  try {
+    const { category } = req.query;
+    // Dummy question
+    const question = {
+      id: 1,
+      question: 'What is the capital of France?',
+      options: ['London', 'Berlin', 'Paris', 'Madrid'],
+      correctAnswer: 2,
+      hints: ['It starts with P', 'It\'s in Europe']
+    };
+    res.json(question);
+  } catch (err) {
+    console.error('Get question error:', err);
+    res.status(500).json({ error: 'Failed to load question' });
   }
 });
 
@@ -830,11 +935,181 @@ app.get('/api/admin/users', verifyToken, requireRole(MANAGEMENT_ROLES), (req, re
 // Get all registration codes (system admin only)
 app.get('/api/admin/codes', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), (req, res) => {
   try {
-    const codes = db.prepare('SELECT id, code, role, used, used_by, created_at FROM registration_codes ORDER BY created_at DESC').all();
-    res.json(codes);
+    const codes = db.prepare('SELECT id, code, role, multi_use, usage_count, used, used_by, created_at FROM registration_codes ORDER BY created_at DESC').all();
+    // Transform for frontend compatibility
+    const transformedCodes = codes.map(code => ({
+      ...code,
+      multiUse: code.multi_use === 1,
+      usageCount: code.usage_count || 0
+    }));
+    res.json({ codes: transformedCodes });
   } catch (err) {
     console.error('Get codes error:', err);
     res.status(500).json({ message: 'Error fetching codes' });
+  }
+});
+
+// Create registration codes (system admin only)
+app.post('/api/admin/codes', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), (req, res) => {
+  try {
+    const { role, quantity = 1, multiUse = false } = req.body;
+
+    if (!role) {
+      return res.status(400).json({ error: 'Role required' });
+    }
+
+    if (multiUse && role !== 'general') {
+      return res.status(400).json({ error: 'Multi-use codes can only be created for general members' });
+    }
+
+    const codes = [];
+    for (let i = 0; i < quantity; i++) {
+      // Generate unique 8-character code
+      let code;
+      let attempts = 0;
+      do {
+        code = crypto.randomBytes(6).toString('base64').replace(/[^A-Z0-9]/ig, '').slice(0, 8).toUpperCase();
+        attempts++;
+        if (attempts > 10) {
+          return res.status(500).json({ error: 'Failed to generate unique code' });
+        }
+      } while (db.prepare('SELECT id FROM registration_codes WHERE code = ?').get(code));
+
+      const insert = db.prepare('INSERT INTO registration_codes (code, role, multi_use, used) VALUES (?, ?, ?, 0)');
+      insert.run(code, role, multiUse ? 1 : 0);
+      codes.push(code);
+    }
+
+    res.json({ codes, message: `Created ${quantity} code(s)` });
+  } catch (err) {
+    console.error('Create codes error:', err);
+    res.status(500).json({ error: 'Error creating codes' });
+  }
+});
+
+// Delete registration code (system admin only)
+app.delete('/api/admin/codes/:code', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), (req, res) => {
+  try {
+    const { code } = req.params;
+    const result = db.prepare('DELETE FROM registration_codes WHERE code = ?').run(code);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Code not found' });
+    }
+
+    res.json({ message: 'Code deleted successfully' });
+  } catch (err) {
+    console.error('Delete code error:', err);
+    res.status(500).json({ error: 'Error deleting code' });
+  }
+});
+
+// Get all code requests (admin only) - TEMP: no auth for testing
+app.get('/api/admin/code-requests', (req, res) => {
+  try {
+    const requests = db.prepare('SELECT * FROM code_requests ORDER BY created_at DESC').all();
+    res.json({ requests });
+  } catch (err) {
+    console.error('Get code requests error:', err);
+    res.status(500).json({ message: 'Error fetching code requests' });
+  }
+});
+
+// Approve a code request (admin only)
+app.post('/api/admin/code-requests/:id/approve', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const { role } = req.body;
+    const requestId = req.params.id;
+
+    // Get the request
+    const request = db.prepare('SELECT * FROM code_requests WHERE id = ?').get(requestId);
+    if (!request) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: 'Request already processed' });
+    }
+
+    // Generate a unique code
+    let code;
+    let attempts = 0;
+    do {
+      code = crypto.randomBytes(6).toString('base64').replace(/[^A-Z0-9]/ig, '').slice(0, 8).toUpperCase();
+      attempts++;
+      if (attempts > 10) {
+        return res.status(500).json({ error: 'Failed to generate unique code' });
+      }
+    } while (db.prepare('SELECT id FROM registration_codes WHERE code = ?').get(code));
+
+    // Create the registration code
+    const insert = db.prepare('INSERT INTO registration_codes (code, role, used) VALUES (?, ?, 0)');
+    insert.run(code, role);
+
+    // Update the request
+    db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime("now") WHERE id = ?').run('approved', code, requestId);
+
+    res.json({ code, message: 'Request approved and code generated' });
+  } catch (err) {
+    console.error('Approve code request error:', err);
+    res.status(500).json({ error: 'Error approving request' });
+  }
+});
+
+// Delete a code request (admin only)
+app.delete('/api/admin/code-requests/:id', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const result = db.prepare('DELETE FROM code_requests WHERE id = ?').run(requestId);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    res.json({ message: 'Request deleted' });
+  } catch (err) {
+    console.error('Delete code request error:', err);
+    res.status(500).json({ error: 'Error deleting request' });
+  }
+});
+
+// Approve all pending code requests (admin only)
+app.post('/api/admin/code-requests/approve-all/pending', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    // Get all pending requests
+    const pendingRequests = db.prepare('SELECT * FROM code_requests WHERE status = ?').all('pending');
+
+    if (pendingRequests.length === 0) {
+      return res.json({ count: 0, message: 'No pending requests' });
+    }
+
+    let approvedCount = 0;
+
+    for (const request of pendingRequests) {
+      // Generate a unique code
+      let code;
+      let attempts = 0;
+      do {
+        code = crypto.randomBytes(6).toString('base64').replace(/[^A-Z0-9]/ig, '').slice(0, 8).toUpperCase();
+        attempts++;
+        if (attempts > 10) continue; // Skip if can't generate unique code
+      } while (db.prepare('SELECT id FROM registration_codes WHERE code = ?').get(code));
+
+      if (code) {
+        // Create the registration code
+        const insert = db.prepare('INSERT INTO registration_codes (code, role, used) VALUES (?, ?, 0)');
+        insert.run(code, 'general'); // Default to general
+
+        // Update the request
+        db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime("now"), auto = 1 WHERE id = ?').run('approved', code, request.id);
+        approvedCount++;
+      }
+    }
+
+    res.json({ count: approvedCount, message: `Approved ${approvedCount} requests` });
+  } catch (err) {
+    console.error('Approve all requests error:', err);
+    res.status(500).json({ error: 'Error approving requests' });
   }
 });
 
@@ -1085,6 +1360,49 @@ app.get('/api/online-members', verifyToken, (req, res) => {
     res.status(500).json({ error: 'Failed to fetch online members' });
   }
 });
+
+// Auto-approve code requests job - runs every 2 minutes
+function autoApproveRequestsJob() {
+  try {
+    const now = new Date().getTime();
+    const autoApproveTime = 5 * 1000; // 5 seconds
+    let updated = false;
+
+    // Get pending requests older than 5 seconds
+    const pendingRequests = db.prepare('SELECT * FROM code_requests WHERE status = ? AND created_at < datetime(\'now\', \'-5 seconds\')').all('pending');
+
+    for (const request of pendingRequests) {
+      // Generate a unique code
+      let code;
+      let attempts = 0;
+      do {
+        code = crypto.randomBytes(6).toString('base64').replace(/[^A-Z0-9]/ig, '').slice(0, 8).toUpperCase();
+        attempts++;
+        if (attempts > 10) break;
+      } while (db.prepare('SELECT id FROM registration_codes WHERE code = ?').get(code));
+
+      if (code) {
+        // Create the registration code
+        const insert = db.prepare('INSERT INTO registration_codes (code, role, used) VALUES (?, ?, 0)');
+        insert.run(code, 'general');
+
+        // Update the request
+        db.prepare('UPDATE code_requests SET status = ?, code_assigned = ?, approved_at = datetime("now"), auto = 1 WHERE id = ?').run('approved', code, request.id);
+        updated = true;
+        console.log(`Auto-approved code request for ${request.name} (${request.phone})`);
+      }
+    }
+
+    if (updated) {
+      console.log('Auto-approval job completed');
+    }
+  } catch (error) {
+    console.error('Auto-approve job error:', error);
+  }
+}
+
+// Start auto-approval job - runs every 2 minutes
+setInterval(autoApproveRequestsJob, 2 * 60 * 1000);
 
 // ==================== SERVER START ====================
 

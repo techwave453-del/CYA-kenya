@@ -94,12 +94,26 @@ function initializeDatabase() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT UNIQUE NOT NULL,
             role TEXT DEFAULT 'general',
+            multi_use INTEGER DEFAULT 0,
+            usage_count INTEGER DEFAULT 0,
             used INTEGER DEFAULT 0,
             used_by INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (used_by) REFERENCES users(id) ON DELETE SET NULL
         )
     `);
+
+    // Add missing columns to existing table if they don't exist
+    try {
+        db.exec(`ALTER TABLE registration_codes ADD COLUMN multi_use INTEGER DEFAULT 0`);
+    } catch (err) {
+        // Column might already exist, ignore error
+    }
+    try {
+        db.exec(`ALTER TABLE registration_codes ADD COLUMN usage_count INTEGER DEFAULT 0`);
+    } catch (err) {
+        // Column might already exist, ignore error
+    }
 
     // Code requests table (requests from users asking for a registration code)
     db.exec(`
@@ -113,6 +127,18 @@ function initializeDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `);
+
+    // Add missing columns to code_requests table if they don't exist
+    try {
+        db.exec(`ALTER TABLE code_requests ADD COLUMN auto INTEGER DEFAULT 0`);
+    } catch (err) {
+        // Column might already exist, ignore error
+    }
+    try {
+        db.exec(`ALTER TABLE code_requests ADD COLUMN approved_at DATETIME`);
+    } catch (err) {
+        // Column might already exist, ignore error
+    }
 
     // Comments table for posts
     db.exec(`

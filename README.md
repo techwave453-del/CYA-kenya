@@ -31,18 +31,18 @@ A secure web game application with encrypted user authentication and reward-base
 ## Project Structure
 
 ```
-web game/
+CYA-kenya/
 ├── server/
-│   └── app.js                 # Express server with authentication
+│   └── app-sqlite.js         # Express server with authentication
 ├── public/
-│   ├── index.html             # Main UI
+│   ├── index.html            # Main UI
 │   ├── css/
-│   │   └── style.css          # Styling
+│   │   └── style.css         # Styling
 │   └── js/
-│       └── app.js             # Frontend logic
+│       └── app.js            # Frontend logic
 ├── data/
-│   └── users.json             # Encrypted user database
-└── package.json               # Dependencies
+│   └── cya.db                # SQLite database
+└── package.json              # Dependencies
 ```
 
 ## Installation & Setup
@@ -55,7 +55,7 @@ web game/
 
 1. **Navigate to project directory:**
 ```bash
-cd "web game"
+cd CYA-kenya
 ```
 
 2. **Install dependencies:**
@@ -72,6 +72,24 @@ npm start
 ```
 http://localhost:5000
 ```
+
+### Creating a System Admin
+
+To create a system admin user, run the following script:
+
+```bash
+node server/create-system-admin.js
+```
+
+This will create a user with username `admin` and password `admin123`. You can log in with these credentials.
+
+Alternatively, generate a registration code for system admin:
+
+```bash
+node server/add-system-admin-code.js
+```
+
+Then use the generated code during signup to create a system admin account.
 
 ## API Endpoints
 
