@@ -456,9 +456,9 @@ body.no-scroll {
 
 .floating-widget {
   position: fixed;
-  width: 300px;
+  width: 320px;
   min-height: 220px;
-  bottom: 240px;
+  bottom: 22px;
   right: 22px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -863,11 +863,11 @@ body.layout-edit-mode::before {
 .task-item,
 .activity-item,
 .announcement-item {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   padding: 16px;
-  border-left: 4px solid var(--accent);
+  border-left: 6px solid var(--accent);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
@@ -876,11 +876,17 @@ body.layout-edit-mode::before {
 .task-item:hover,
 .activity-item:hover,
 .announcement-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(180deg, rgba(79,140,255,0.06), rgba(79,140,255,0.03));
+  border-color: rgba(79,140,255,0.18);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(79, 140, 255, 0.1);
 }
+
+/* Different accents for types */
+.task-item { border-left-color: #f6c84c; }
+.activity-item { border-left-color: #4fe09b; }
+.announcement-item { border-left-color: #ff7a7a; }
+.post-item { border-left-color: var(--accent); }
 
 .post-item h3,
 .task-item h3,

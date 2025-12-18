@@ -585,6 +585,45 @@ function initializeFloatingWidget() {
     }
 }
 
+// Simple drag for floating widget header
+function initWidgetDrag() {
+    const widget = document.getElementById('floatingWidget');
+    if (!widget) return;
+    const header = widget.querySelector('.floating-widget-header');
+    if (!header) return;
+    let dragging = false;
+    let offset = { x: 0, y: 0 };
+    function getXY(e) {
+        if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        return { x: e.clientX, y: e.clientY };
+    }
+    header.style.cursor = 'move';
+    header.addEventListener('pointerdown', (e) => {
+        const p = getXY(e);
+        const rect = widget.getBoundingClientRect();
+        offset.x = p.x - rect.left;
+        offset.y = p.y - rect.top;
+        dragging = true;
+        widget.style.right = 'auto';
+        widget.style.left = rect.left + 'px';
+        widget.style.top = rect.top + 'px';
+    });
+    window.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const p = getXY(e);
+        let nx = p.x - offset.x;
+        let ny = p.y - offset.y;
+        nx = Math.max(0, Math.min(nx, window.innerWidth - widget.offsetWidth));
+        ny = Math.max(0, Math.min(ny, window.innerHeight - widget.offsetHeight));
+        widget.style.left = nx + 'px';
+        widget.style.top = ny + 'px';
+    });
+    window.addEventListener('pointerup', () => { dragging = false; });
+}
+
+// initialize widget drag after DOM ready
+document.addEventListener('DOMContentLoaded', () => { initWidgetDrag(); });
+
 function toggleWidget() {
     // Make the widget behave like the Quick Access panel: copy its content
     // into the right-sidebar and open the panel. This ensures consistent
@@ -628,12 +667,14 @@ function toggleWidget() {
         document.body.classList.add('panel-open-active');
         btn.classList.add('hidden');
         uiLog('Widget opened as Quick Access panel');
+        _syncWidgetWithPanel(true);
     } else {
         b.classList.remove('visible');
         document.body.classList.remove('no-scroll');
         document.body.classList.remove('panel-open-active');
         btn.classList.remove('hidden');
         uiLog('Widget panel closed');
+        _syncWidgetWithPanel(false);
     }
 }
 
@@ -2272,10 +2313,31 @@ function toggleQuickAccess() {
         b.classList.add('visible');
         document.body.classList.add('no-scroll');
         document.body.classList.add('panel-open-active');
+        _syncWidgetWithPanel(true);
     } else {
         b.classList.remove('visible');
         document.body.classList.remove('no-scroll');
         document.body.classList.remove('panel-open-active');
+        _syncWidgetWithPanel(false);
+    }
+}
+
+// When quick access panel opens/closes, keep floating widget visibility in sync
+function _syncWidgetWithPanel(opened) {
+    const widget = document.getElementById('floatingWidget');
+    const widgetBtn = document.getElementById('widgetToggleBtn');
+    if (!widget || !widgetBtn) return;
+    if (opened) {
+        // hide floating widget to avoid duplication
+        widget.classList.add('hidden');
+        widget.style.display = 'none';
+        widget.setAttribute('aria-hidden', 'true');
+        widgetBtn.classList.add('hidden');
+    } else {
+        widget.classList.remove('hidden');
+        widget.style.display = 'flex';
+        widget.setAttribute('aria-hidden', 'false');
+        widgetBtn.classList.remove('hidden');
     }
 }
 
