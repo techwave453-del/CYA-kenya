@@ -397,24 +397,9 @@ app.post('/api/code-request', (req, res) => {
   }
 });
 
-// Check approval (frontend polls to see if request has been approved)
+// Check approval (frontend polls to see if request has been approved) - TEMPORARILY DISABLED
 app.post('/api/check-approval', (req, res) => {
-  try {
-    const { name, phone } = req.body;
-    if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
-
-    const row = db.prepare('SELECT * FROM code_requests WHERE name = ? AND phone = ? ORDER BY created_at DESC').get(name.trim(), phone.trim());
-    if (!row) return res.json({ approved: false });
-
-    if (row.status === 'approved' && row.code_assigned) {
-      return res.json({ approved: true, code: row.code_assigned, church: row.church });
-    }
-
-    res.json({ approved: false });
-  } catch (err) {
-    console.error('Check approval error:', err);
-    res.status(500).json({ error: 'Check failed' });
-  }
+  res.json({ approved: false });
 });
 
 // PROFILE: update username
