@@ -13,6 +13,7 @@ const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const multer = require('multer');
 
 const app = express();
 
@@ -35,6 +36,26 @@ const dbHelpers = require('./db-helpers');
 
 const PORT = Number(process.env.PORT) || 5000;
 const SECRET_KEY = process.env.SECRET_KEY || 'dennie-softs-secure-key-2025';
+
+// Multer config for image uploads
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, '../public/uploads'),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, 'login-bg-' + Date.now() + ext);
+  }
+});
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
 
 // Track connected socket users
 let connectedUsers = {};
@@ -179,7 +200,7 @@ function requireRole(allowedRoles) {
 // Signup
 app.post('/api/signup', async (req, res) => {
   try {
-    const { username, password, registrationCode } = req.body;
+    const { username, password, registrationCode, church, phone } = req.body;
 
     if (!username || !password || !registrationCode) {
       return res.status(400).json({ message: 'Username, password and registration code required' });
@@ -208,6 +229,15 @@ app.post('/api/signup', async (req, res) => {
     const role = codeRow.role || ROLES.GENERAL;
 
     const user = dbHelpers.createUser(normalizedUsername, hashedPassword, role);
+    
+    // Update user with church and phone if provided
+    if (church || phone) {
+      db.prepare('UPDATE users SET church = ?, phone = ? WHERE id = ?').run(
+        church ? church.trim() : 'general',
+        phone ? phone.trim() : null,
+        user.id
+      );
+    }
 
     // Update registration code usage
     if (codeRow.multi_use) {
@@ -224,7 +254,8 @@ app.post('/api/signup', async (req, res) => {
       message: 'User created successfully',
       token,
       username: normalizedUsername,
-      role
+      role,
+      church: church || 'general'
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -257,7 +288,8 @@ app.post('/api/login', async (req, res) => {
       message: 'Login successful',
       token,
       username,
-      role: user.role
+      role: user.role,
+      church: user.church || 'general'
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -910,11 +942,27 @@ app.post('/api/get-temp-password', (req, res) => {
 // Get all users (admin only)
 app.get('/api/admin/users', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
   try {
-    const users = db.prepare('SELECT id, username, role, created_at FROM users ORDER BY created_at DESC').all();
-    res.json(users);
+    const users = db.prepare('SELECT id, username, role, church, created_at FROM users ORDER BY created_at DESC').all();
+    res.json({ users });
   } catch (err) {
     console.error('Get users error:', err);
     res.status(500).json({ message: 'Error fetching users' });
+  }
+});
+
+// Reset stats for all users by church
+app.post('/api/admin/reset-stats-by-church', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), (req, res) => {
+  try {
+    const { church } = req.body;
+    if (!church) {
+      return res.status(400).json({ error: 'Church name required' });
+    }
+    const updateStmt = db.prepare(`UPDATE users SET wins = 0, losses = 0, games_played = 0, balance = 0, total_game_score = 0, games_played_total = 0, avg_game_score = 0, bible_games_score = 0, trivia_score = 0, combined_score = 0 WHERE church = ?`);
+    const result = updateStmt.run(church);
+    res.json({ message: `Reset stats for ${result.changes} users in ${church}`, count: result.changes });
+  } catch (err) {
+    console.error('Reset stats error:', err);
+    res.status(500).json({ error: 'Error resetting stats' });
   }
 });
 
@@ -993,7 +1041,7 @@ app.delete('/api/admin/codes/:code', verifyToken, requireRole([ROLES.SYSTEM_ADMI
 // Get all code requests (admin only)
 app.get('/api/admin/code-requests', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
   try {
-    const requests = db.prepare('SELECT * FROM code_requests ORDER BY created_at DESC').all();
+    const requests = db.prepare('SELECT id, name, phone, church, status, code_assigned as generatedCode, created_at as createdAt, approved_at as approvedAt, auto FROM code_requests ORDER BY created_at DESC').all();
     res.json({ requests });
   } catch (err) {
     console.error('Get code requests error:', err);
@@ -1162,6 +1210,22 @@ app.delete('/api/admin/users/:username', verifyToken, requireRole([ROLES.SYSTEM_
   } catch (err) {
     console.error('Delete user error:', err);
     res.status(500).json({ message: 'Error deleting user' });
+  }
+});
+
+// Reset stats for a specific user
+app.post('/api/admin/users/:username/reset', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const username = req.params.username;
+    const updateStmt = db.prepare(`UPDATE users SET wins = 0, losses = 0, games_played = 0, balance = 0, total_game_score = 0, games_played_total = 0, avg_game_score = 0, bible_games_score = 0, trivia_score = 0, combined_score = 0 WHERE username = ?`);
+    const result = updateStmt.run(username);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ message: `Stats reset for ${username}`, count: result.changes });
+  } catch (err) {
+    console.error('Reset user stats error:', err);
+    res.status(500).json({ error: 'Error resetting stats' });
   }
 });
 
@@ -1470,6 +1534,127 @@ app.delete('/api/chat/:id', verifyToken, (req, res) => {
   } catch (error) {
     console.error('Delete message error:', error);
     res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
+// ==================== LEADERBOARD ENDPOINT ====================
+
+app.get('/api/leaderboard', (req, res) => {
+  try {
+    const sortBy = req.query.sortBy || 'wins';
+    const limit = parseInt(req.query.limit) || 100;
+    
+    const users = db.prepare(`
+      SELECT id, username, church, role, created_at, 
+             wins, losses, games_played, balance, total_game_score, 
+             games_played_total, avg_game_score, bible_games_score, trivia_score, combined_score
+      FROM users 
+      WHERE role != 'system-admin'
+      ORDER BY username ASC
+    `).all();
+    
+    const leaderboard = users.map(user => ({
+      username: user.username,
+      church: user.church || 'General',
+      wins: user.wins || 0,
+      losses: user.losses || 0,
+      games: user.games_played || 0,
+      balance: user.balance || 0,
+      winRate: user.games_played > 0 ? ((user.wins / user.games_played) * 100).toFixed(1) : 0,
+      totalGameScore: user.total_game_score || 0,
+      gamesPlayedTotal: user.games_played_total || 0,
+      avgGameScore: user.avg_game_score || 0,
+      bibleGamesScore: user.bible_games_score || 0,
+      triviaScore: user.trivia_score || 0,
+      combinedScore: user.combined_score || 0,
+      gameBreakdown: {},
+      joinDate: user.created_at || new Date().toISOString(),
+      rank: 0
+    }));
+    
+    // Group by church
+    const groupedByChurch = {};
+    leaderboard.forEach(player => {
+      const church = player.church;
+      if (!groupedByChurch[church]) {
+        groupedByChurch[church] = [];
+      }
+      groupedByChurch[church].push(player);
+    });
+    
+    // Sort within each church and flatten
+    const sortedLeaderboard = [];
+    Object.keys(groupedByChurch).sort().forEach(church => {
+      const churchPlayers = groupedByChurch[church];
+      
+      // Sort by criteria
+      if (sortBy === 'wins') {
+        churchPlayers.sort((a, b) => b.wins - a.wins);
+      } else if (sortBy === 'balance') {
+        churchPlayers.sort((a, b) => b.balance - a.balance);
+      } else if (sortBy === 'games') {
+        churchPlayers.sort((a, b) => b.gamesPlayedTotal - a.gamesPlayedTotal);
+      } else if (sortBy === 'winRate') {
+        churchPlayers.sort((a, b) => b.winRate - a.winRate);
+      } else if (sortBy === 'gameScore') {
+        churchPlayers.sort((a, b) => b.totalGameScore - a.totalGameScore);
+      } else if (sortBy === 'combined') {
+        churchPlayers.sort((a, b) => b.combinedScore - a.combinedScore);
+      }
+      
+      // Add church header
+      sortedLeaderboard.push({
+        isChurchHeader: true,
+        church: church,
+        playerCount: churchPlayers.length
+      });
+      
+      // Add ranked players
+      churchPlayers.forEach((player, index) => {
+        player.churchRank = index + 1;
+        sortedLeaderboard.push(player);
+      });
+    });
+    
+    // Limit results
+    const limited = sortedLeaderboard.slice(0, limit);
+    res.json({ leaderboard: limited });
+  } catch (error) {
+    console.error('Leaderboard error:', error);
+    res.status(500).json({ error: 'Failed to load leaderboard' });
+  }
+});
+
+// ==================== LOGIN PAGE BACKGROUND IMAGE ====================
+
+app.post('/api/admin/upload-login-bg', verifyToken, requireRole([ROLES.SYSTEM_ADMIN]), upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+    
+    const imagePath = `/uploads/${req.file.filename}`;
+    res.json({ success: true, imagePath, message: 'Login background updated successfully!' });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
+
+app.get('/api/login-bg', (req, res) => {
+  try {
+    const uploadsDir = path.join(__dirname, '../public/uploads');
+    if (fs.existsSync(uploadsDir)) {
+      const files = fs.readdirSync(uploadsDir).filter(f => f.startsWith('login-bg-'));
+      if (files.length > 0) {
+        files.sort();
+        const latest = files[files.length - 1];
+        return res.json({ imagePath: `/uploads/${latest}` });
+      }
+    }
+    res.json({ imagePath: null });
+  } catch (error) {
+    res.json({ imagePath: null });
   }
 });
 

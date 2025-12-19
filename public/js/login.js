@@ -335,12 +335,15 @@ async function handleSignup() {
 
   submitBtn.disabled = true;
   submitBtn.textContent = 'Creating account...';
+  
+  const church = document.getElementById('signupChurch')?.value.trim() || '';
+  const phone = document.getElementById('signupPhone')?.value.trim() || '';
 
   try {
     const response = await fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, registrationCode })
+      body: JSON.stringify({ username, password, registrationCode, church, phone })
     });
 
     const data = await response.json();
@@ -512,3 +515,18 @@ async function handleCodeRequest(e) {
         messageDiv.innerHTML = '✗ ' + error.message;
     }
 }
+// Load custom login background
+(async function loadLoginBackground() {
+  try {
+    const response = await fetch('/api/login-bg');
+    const data = await response.json();
+    if (data.imagePath) {
+      const leftSide = document.querySelector('.login-page-left');
+      if (leftSide) {
+        leftSide.style.backgroundImage = `url('${data.imagePath}')`;
+      }
+    }
+  } catch (error) {
+    console.log('Using default login background');
+  }
+})();

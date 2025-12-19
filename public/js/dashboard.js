@@ -1311,16 +1311,22 @@ function buildPostHTML(post) {
     const imageHtml = post.image ? `<div class="post-image"><img src="${post.image}" alt="post image" /></div>` : '';
     const captionHtml = post.caption ? `<div class="post-caption">${escapeHtml(post.caption)}</div>` : '';
     const comments = (post.comments || []).slice(-5);
-    const commentsHtml = comments.length ? `<div class="post-comments">${comments.map(c => `<div class="comment-item"><strong>${escapeHtml(c.author)}</strong> ${escapeHtml(c.text)} <span class="comment-time">${new Date(c.createdAt).toLocaleString()}</span></div>`).join('')}</div>` : '';
+    const commentsHtml = comments.length ? `<div class="post-comments">${comments.map(c => {
+        const d = c.createdAt ? new Date(c.createdAt) : new Date();
+        const timeStr = !isNaN(d) ? d.toLocaleString() : 'Unknown time';
+        return `<div class="comment-item"><strong>${escapeHtml(c.author)}</strong> ${escapeHtml(c.text)} <span class="comment-time">${timeStr}</span></div>`;
+    }).join('')}</div>` : '';
 
     return `
         <div class="post-item" data-id="${post.id}">
             <div class="post-header">
                 <div>
                     <span class="post-author">${escapeHtml(post.author)}</span>
-                    <span class="post-role">${escapeHtml(getRoleLabel(post.role))}</span>
                 </div>
-                <div class="post-date">${new Date(post.createdAt).toLocaleDateString()}</div>
+                <div class="post-date">${(() => {
+                    const d = post.createdAt ? new Date(post.createdAt) : new Date();
+                    return !isNaN(d) ? d.toLocaleDateString() : 'Unknown date';
+                })()}</div>
             </div>
             <div class="post-content">${escapeHtml(post.content)}</div>
             ${imageHtml}
@@ -1364,7 +1370,9 @@ function appendCommentToPost(postId, comment) {
     const postEl = document.querySelector(`.post-item[data-id="${postId}"]`);
     if (!postEl) return;
     let commentsContainer = postEl.querySelector('.post-comments');
-    const commentHtml = `<div class="comment-item"><strong>${escapeHtml(comment.author)}</strong> ${escapeHtml(comment.text)} <span class="comment-time">${new Date(comment.createdAt).toLocaleString()}</span></div>`;
+    const d = comment.createdAt ? new Date(comment.createdAt) : new Date();
+    const timeStr = !isNaN(d) ? d.toLocaleString() : 'Unknown time';
+    const commentHtml = `<div class="comment-item"><strong>${escapeHtml(comment.author)}</strong> ${escapeHtml(comment.text)} <span class="comment-time">${timeStr}</span></div>`;
     if (commentsContainer) {
         commentsContainer.insertAdjacentHTML('beforeend', commentHtml);
     } else {
@@ -1524,7 +1532,8 @@ function renderChatMessages(shouldAutoScroll = true, onlyNewMessages = false) {
     
     for (let i = startIndex; i < chatMessages.length; i++) {
         const msg = chatMessages[i];
-        const msgDate = new Date(msg.createdAt).toLocaleDateString();
+        const createdDate = msg.createdAt ? new Date(msg.createdAt) : new Date();
+        const msgDate = !isNaN(createdDate) ? createdDate.toLocaleDateString() : 'Unknown';
         
         if (msgDate !== lastDate) {
             html += `<div class="chat-date-divider"><span>${msgDate === new Date().toLocaleDateString() ? 'Today' : msgDate}</span></div>`;
@@ -1567,7 +1576,10 @@ function renderChatMessages(shouldAutoScroll = true, onlyNewMessages = false) {
                     <div class="chat-message-user">
                         ${isOwn ? 'You' : escapeHtml(msg.username)}
                     </div>
-                    <div class="chat-message-time">${new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    <div class="chat-message-time">${(() => {
+                        const d = msg.createdAt ? new Date(msg.createdAt) : new Date();
+                        return !isNaN(d) ? d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    })()}</div>
                 </div>
                 <div class="chat-message-content">${escapeHtml(msg.message)}</div>
                 ${showDelete ? `
@@ -2219,7 +2231,11 @@ function renderPostHtml(post) {
     const imageHtml = post.image ? `<div class="post-image"><img src="${post.image}" alt="post image"></div>` : '';
     const captionHtml = post.caption ? `<div class="post-caption">${escapeHtml(post.caption)}</div>` : '';
     const comments = (post.comments || []).slice(-5);
-    const commentsHtml = comments.length ? `<div class="post-comments">${comments.map(c => `<div class="comment-item"><strong>${escapeHtml(c.author)}</strong> ${escapeHtml(c.text)} <span class="comment-time">${new Date(c.createdAt).toLocaleString()}</span></div>`).join('')}</div>` : '';
+    const commentsHtml = comments.length ? `<div class="post-comments">${comments.map(c => {
+        const d = c.createdAt ? new Date(c.createdAt) : new Date();
+        const timeStr = !isNaN(d) ? d.toLocaleString() : 'Unknown time';
+        return `<div class="comment-item"><strong>${escapeHtml(c.author)}</strong> ${escapeHtml(c.text)} <span class="comment-time">${timeStr}</span></div>`;
+    }).join('')}</div>` : '';
 
     return `
         <div class="post-item" id="post_${post.id}" data-id="${post.id}">

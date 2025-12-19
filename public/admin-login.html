@@ -160,7 +160,7 @@
 
       if (!data.role) throw new Error("Error: Role missing from server.");
 
-      const allowed = ["admin", "moderator", "superadmin"];
+      const allowed = ["admin", "moderator", "system-admin"];
       if (!allowed.includes(data.role.toLowerCase())) {
         throw new Error("You do not have permission to access the Admin Panel.");
       }      // Save token and user data with correct keys

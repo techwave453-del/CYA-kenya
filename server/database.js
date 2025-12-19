@@ -19,6 +19,7 @@ function initializeDatabase() {
             password TEXT NOT NULL,
             role TEXT DEFAULT 'general',
             church TEXT DEFAULT 'general',
+            phone TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `);

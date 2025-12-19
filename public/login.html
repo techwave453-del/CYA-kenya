@@ -234,6 +234,173 @@
         .password-peek-btn.active .eye-icon {
             opacity: 1;
         }
+        
+        /* New Login Page Redesign */
+        .login-page-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+            gap: 0;
+        }
+        
+        .login-page-left {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        .login-page-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .logo-section {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .aic-logo {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .org-names {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .org-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 1px;
+        }
+        
+        .org-divider {
+            width: 2px;
+            height: 30px;
+            background: rgba(255, 215, 0, 0.5);
+        }
+        
+        .verse-section {
+            position: relative;
+            z-index: 1;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-top: 40px;
+        }
+        
+        .verse-text {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            font-style: italic;
+            text-align: center;
+        }
+        
+        .verse-reference {
+            color: rgba(255, 215, 0, 0.9);
+            font-size: 13px;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .login-page-right {
+            background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .login-page-wrapper {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+            
+            .login-page-left {
+                padding: 40px 20px;
+                min-height: 350px;
+            }
+            
+            .verse-section {
+                margin-top: 30px;
+            }
+            
+            .login-page-right {
+                min-height: auto;
+                padding: 30px 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .aic-logo {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .logo-section {
+                margin-bottom: 30px;
+            }
+            
+            .org-names {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .org-divider {
+                display: none;
+            }
+            
+            .verse-section {
+                max-width: 320px;
+                padding: 20px;
+                margin-top: 25px;
+            }
+            
+            .verse-text {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -258,7 +425,28 @@
         <a href="login.html" class="btn-mobile" onclick="toggleMobileMenu()">Login</a>
     </div>
 
-    <div class="container">
+    <div class="login-page-wrapper">
+        <!-- Left Side: Logo & Verse -->
+        <div class="login-page-left">
+            <div class="logo-section">
+                <img src="/assets/images/aic_logo.png" alt="AIC Logo" class="aic-logo">
+                <div class="org-names">
+                    <span class="org-name">AIC</span>
+                    <div class="org-divider"></div>
+                    <span class="org-name">CYA</span>
+                </div>
+            </div>
+            
+            <div class="verse-section">
+                <div class="verse-text">
+                    "Don't let anyone look down on you because you are young, but set an example for the believers in speech, in conduct, in love, in faith and in purity."
+                </div>
+                <div class="verse-reference">1 Timothy 4:12</div>
+            </div>
+        </div>
+        
+        <!-- Right Side: Forms -->
+        <div class="login-page-right">
         <div id="authContainer" class="auth-container">
             <div class="form-box login-form">
                 <h2>Welcome Back</h2>
@@ -296,6 +484,8 @@
                             <span class="eye-icon">👁</span>
                         </button>
                     </div>
+                    <input type="text" id="signupChurch" placeholder="Your Church" required autocomplete="off">
+                    <input type="tel" id="signupPhone" placeholder="Your Phone" required autocomplete="tel">
                     <div class="code-input-group">
                         <input type="text" id="registrationCode" placeholder="Registration Code" required maxlength="12" autocomplete="off">
                         <div id="codeStatus" class="code-status"></div>
@@ -307,6 +497,8 @@
             </div>
 
         </div>
+        </div>
+    </div>
     </div>
 
     <!-- Code Request Modal -->

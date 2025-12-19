@@ -2,6 +2,54 @@ let authToken = '';
 let currentUsername = '';
 let userRole = '';
 
+// Toast Notification System (consistent with other pages)
+function showToast(message, type = 'success', duration = 3000) {
+    const container = document.getElementById('notificationContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.style.cssText = `
+        background: ${type === 'success' ? '#d1fae5' : type === 'error' ? '#fee2e2' : '#dbeafe'};
+        color: ${type === 'success' ? '#065f46' : type === 'error' ? '#7f1d1d' : '#0c4a6e'};
+        padding: 12px 16px;
+        border-radius: 8px;
+        border-left: 4px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideInRight 0.3s ease-out;
+        max-width: 400px;
+    `;
+    
+    const icons = {
+        success: '✓',
+        error: '✕',
+        info: 'ℹ'
+    };
+    
+    toast.innerHTML = `
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span style="font-weight: bold; font-size: 16px;">${icons[type] || '•'}</span>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.animation = 'slideInRight 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, duration);
+    }
+}
+
+// Maintain showMessage for backward compatibility (calls showToast)
+function showMessage(message, type) {
+    showToast(message, type);
+}
+
 const memberRoles = {
     'system-admin': 'System Administrator',
     'admin': 'Administrator',

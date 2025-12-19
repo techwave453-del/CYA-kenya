@@ -34,7 +34,7 @@ html, body {
   flex-direction: column;
 }
 
-body.no-scroll {
+body {
   overflow-y: auto;
   /*position: fixed;*/
   width: 100%;
@@ -78,7 +78,7 @@ body.no-scroll {
 
 .dashboard-container {
   display: block;
-  padding: 20px;
+  padding: 20px 0;
   min-height: auto;
   flex: 1;
   margin-top: 0;
@@ -87,15 +87,15 @@ body.no-scroll {
 
 .main-content {
   background: var(--panel-bg);
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 0px 20px 24px 20px;
+  box-shadow: none;
   overflow-y: auto;
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 80px);
   width: 100%;
-  margin: 0 auto;
-  max-width: 1000px;
+  margin: 0;
 }
 
 .main-responsive {
@@ -106,7 +106,12 @@ body.no-scroll {
 
 @media (max-width: 1400px) {
   .dashboard-container {
-    padding: 20px;
+    padding: 20px 0;
+  }
+  
+  .main-content {
+    padding: 24px 20px;
+    max-height: calc(100vh - 80px);
   }
   
   .sidebar,
@@ -131,12 +136,13 @@ body.no-scroll {
 
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 16px;
+    padding: 16px 0;
   }
   
   .main-content {
-    padding: 16px;
-    max-height: calc(100vh - 120px);
+    padding: 16px 12px;
+    max-height: calc(100vh - 80px);
+    border-radius: 0;
   }
   
   .sidebar,
@@ -785,10 +791,12 @@ body.no-scroll {
 .post-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+  flex-wrap: wrap;
 }
 
 .post-author {
@@ -817,6 +825,9 @@ body.no-scroll {
   line-height: 1.6;
   margin: 12px 0;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .post-item h3,
@@ -1299,6 +1310,49 @@ body.no-scroll {
   font-weight: 600;
 }
 
+/* Chat Message Styling */
+.chat-message {
+  padding: 10px 12px;
+  border-radius: 8px;
+  max-width: 85%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+.chat-message.own {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--accent), #ffb700);
+  color: var(--primary);
+  border-radius: 16px 4px 16px 16px;
+  margin-left: auto;
+}
+
+.chat-message.other {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  border: 1px solid var(--border);
+  border-radius: 4px 16px 16px 16px;
+}
+
+.chat-message .message-author {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.chat-message .message-time {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
 @media (max-width: 768px) {
   .mobile-quick-toggle {
     display: flex;
@@ -1309,6 +1363,76 @@ body.no-scroll {
   .chat-toggle-btn,
   .widget-toggle-btn {
     display: none;
+  }
+
+  .post-item,
+  .task-item,
+  .activity-item,
+  .announcement-item {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .post-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .post-reactions {
+    width: 100%;
+  }
+
+  .card-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .content-section {
+    padding: 8px 12px 20px 12px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .section-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .section-header .btn {
+    width: 100%;
+  }
+
+  .chat-message {
+    max-width: 90%;
+  }
+
+  #floatingChat {
+    width: 100vw;
+    height: calc(100vh - 80px);
+    border-radius: 0;
+    bottom: 0;
+    right: 0;
+  }
+
+  .floating-widget {
+    width: calc(100vw - 32px);
+    min-width: 280px;
+    max-width: 100%;
+  }
+
+  .floating-controls {
+    right: 16px;
+    bottom: 16px;
+    gap: 8px;
+  }
+
+  .floating-controls button {
+    width: 48px;
+    height: 48px;
+    font-size: 1rem;
   }
 }
 

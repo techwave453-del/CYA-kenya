@@ -940,6 +940,7 @@
                 <button class="admin-tab" data-tab="users" id="tabUsers">User Management</button>
                 <button class="admin-tab" data-tab="game" id="tabGame">🎮 Games</button>
                 <button class="admin-tab" data-tab="stats" id="tabStats">Statistics</button>
+                <button class="admin-tab" data-tab="settings" id="tabSettings">⚙️ Settings</button>
             </div>
             
             <!-- Code Requests Section -->
@@ -1004,6 +1005,7 @@
                     <thead>
                         <tr>
                             <th>Code</th>
+                            <th>Church</th>
                             <th>Role</th>
                             <th>Type</th>
                             <th>Status</th>
@@ -1031,6 +1033,7 @@
                     <thead>
                         <tr>
                             <th>Username</th>
+                            <th>Church</th>
                             <th>Role</th>
                             <th>Balance</th>
                             <th>Wins/Losses</th>
@@ -1300,6 +1303,22 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Settings Section -->
+            <div class="admin-section" id="sectionSettings">
+                <h2>Login Page Settings</h2>
+                <div class="form-group">
+                    <label>Login Page Background Image</label>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Upload an image to display behind the AIC logo and verse section on the login page.</p>
+                    <input type="file" id="bgImageInput" accept="image/*" style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; width: 100%; cursor: pointer;">
+                </div>
+                <button class="btn-admin primary" onclick="uploadLoginBackground()" style="margin-top: 10px;">Upload Background Image</button>
+                <div id="settingsMessage" class="message-box"></div>
+                <div id="previewContainer" style="margin-top: 20px; display: none;">
+                    <p style="font-weight: 600; margin-bottom: 10px;">Current Background:</p>
+                    <img id="previewImage" style="max-width: 100%; max-height: 300px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1419,6 +1438,17 @@
             }
         }
         
+        function formatSafeDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return 'Invalid Date';
+                return d.toLocaleDateString();
+            } catch (e) {
+                return 'Invalid Date';
+            }
+        }
+        
         function renderCodeRequests(requests) {
             const tbody = document.getElementById('requestsTableBody');
             
@@ -1439,8 +1469,8 @@
                         <td>${req.name}</td>
                         <td>${req.phone}</td>
                         <td style="max-width: 200px; word-break: break-word;">${req.church || 'N/A'}</td>
-                        <td><span class="status-badge available">Pending</span></td>
-                        <td>${new Date(req.createdAt).toLocaleDateString()}</td>
+                        <td><span class="status-badge available">${req.status || 'Pending'}</span></td>
+                        <td>${formatSafeDate(req.createdAt)}</td>
                         <td>
                             <div class="action-buttons" style="display: flex; gap: 5px;">
                                 <button class="btn-admin success" onclick="openApproveModal('${req.id}', '${req.name}')" style="padding: 6px 12px; font-size: 12px;">Approve & Send Code</button>
@@ -1492,7 +1522,7 @@
                                 <span style="font-size: 11px; color: #666; background: #e8f4f8; padding: 2px 6px; border-radius: 3px; white-space: nowrap;">${req.auto ? '🤖 Auto' : '👤 Manual'}</span>
                             </div>
                         </td>
-                        <td style="font-size: 12px; color: #666;">${new Date(req.approvedAt).toLocaleDateString()}</td>
+                        <td style="font-size: 12px; color: #666;">${formatSafeDate(req.approvedAt)}</td>
                         <td>
                             <button class="btn-admin danger" onclick="rejectCodeRequest('${req.id}')" style="padding: 6px 12px; font-size: 12px;">Delete</button>
                         </td>
@@ -1715,7 +1745,7 @@
                     <td>${roleNames[code.role] || code.role}</td>
                     <td><span class="status-badge ${code.multiUse ? 'multi-use' : 'single-use'}">${code.multiUse ? 'Multi-use' : 'Single-use'}</span></td>
                     <td><span class="status-badge ${code.used ? 'used' : 'available'}">${code.multiUse ? `Used ${code.usageCount || 0} times` : (code.used ? 'Used' : 'Available')}</span></td>
-                    <td>${new Date(code.createdAt).toLocaleDateString()}</td>
+                    <td>${formatSafeDate(code.createdAt)}</td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn-admin danger" onclick="deleteCode('${code.code}')" ${code.used && !code.multiUse ? 'disabled' : ''}>Delete</button>
@@ -1853,7 +1883,7 @@
                         <div style="flex: 1;">
                             <strong>${u.username}</strong>
                             <span class="role-badge" style="margin-left: 10px;">${roleNames[u.role] || u.role}</span>
-                            <div style="font-size: 12px; color: #888; margin-top: 5px;">Requested: ${new Date(u.requestedAt).toLocaleString()}</div>
+                            <div style="font-size: 12px; color: #888; margin-top: 5px;">Requested: ${formatSafeDate(u.requestedAt)}</div>
                             <div id="timer-${u.username}" style="font-size: 13px; color: #dc2626; font-weight: 600; margin-top: 8px; padding: 8px 12px; background: #fee2e2; border-radius: 6px; display: inline-block; border: 1px solid #fca5a5;">
                                 ⏱ Auto-reset in: <span id="countdown-${u.username}">${u.secondsRemaining}</span>s ${u.autoGenerated ? '✓ Auto-Generated' : ''}
                             </div>
@@ -2096,13 +2126,14 @@
             const tbody = document.getElementById('usersTableBody');
             
             if (!users || users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No users found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">No users found</td></tr>';
                 return;
             }
             
             tbody.innerHTML = users.map(user => `
                 <tr>
                     <td><strong>${user.username}</strong></td>
+                    <td>${user.church || 'N/A'}</td>
                     <td><span class="role-badge">${roleNames[user.role] || user.role}</span></td>
                     <td>$${(user.balance || 0).toFixed(2)}</td>
                     <td>${user.wins || 0} / ${user.losses || 0}</td>
@@ -2574,6 +2605,68 @@
             localStorage.removeItem('userRole');
             window.location.href = 'landing.html';
         }
+        
+        async function uploadLoginBackground() {
+            const fileInput = document.getElementById('bgImageInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessage('settingsMessage', 'Please select an image file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('/api/admin/upload-login-bg', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+                
+                showMessage('settingsMessage', '✓ Login background updated successfully!', 'success');
+                fileInput.value = '';
+                loadLoginPreview();
+            } catch (error) {
+                showMessage('settingsMessage', error.message, 'error');
+            }
+        }
+        
+        async function loadLoginPreview() {
+            try {
+                const response = await fetch('/api/login-bg');
+                const data = await response.json();
+                
+                if (data.imagePath) {
+                    const container = document.getElementById('previewContainer');
+                    const img = document.getElementById('previewImage');
+                    img.src = data.imagePath;
+                    container.style.display = 'block';
+                }
+            } catch (error) {
+                console.log('Could not load preview');
+            }
+        }
+        
+        // Load preview when settings tab is opened
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.admin-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    if (this.dataset.tab === 'settings') {
+                        loadLoginPreview();
+                    }
+                });
+            });
+        });
     </script>
     <script src="js/session.js"></script>
 </body>
