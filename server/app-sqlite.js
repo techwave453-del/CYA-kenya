@@ -1658,6 +1658,60 @@ app.get('/api/login-bg', (req, res) => {
   }
 });
 
+// ==================== GAME MANAGEMENT ENDPOINTS ====================
+
+// Get game content by type
+app.get('/api/admin/games/:gameType', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const { gameType } = req.params;
+    
+    // Return empty content for all game types (database structure for games not implemented yet)
+    res.json({ content: [] });
+  } catch (err) {
+    console.error('Get game content error:', err);
+    res.status(500).json({ error: 'Failed to load game content' });
+  }
+});
+
+// Add game content
+app.post('/api/admin/games/:gameType', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const { gameType } = req.params;
+    
+    // Acknowledge the request (database structure for games not implemented yet)
+    res.status(201).json({ success: true, message: 'Game content added (storage not yet implemented)' });
+  } catch (err) {
+    console.error('Add game content error:', err);
+    res.status(500).json({ error: 'Failed to add game content' });
+  }
+});
+
+// Delete game content
+app.delete('/api/admin/games/:gameType/:itemId', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const { gameType, itemId } = req.params;
+    
+    // Acknowledge the request (database structure for games not implemented yet)
+    res.json({ success: true, message: 'Game content deleted (storage not yet implemented)' });
+  } catch (err) {
+    console.error('Delete game content error:', err);
+    res.status(500).json({ error: 'Failed to delete game content' });
+  }
+});
+
+// Auto-populate game content
+app.post('/api/admin/games/:gameType/auto-populate', verifyToken, requireRole(MANAGEMENT_ROLES), (req, res) => {
+  try {
+    const { gameType } = req.params;
+    
+    // Acknowledge the request (database structure for games not implemented yet)
+    res.json({ success: true, message: `${gameType} auto-populated (storage not yet implemented)` });
+  } catch (err) {
+    console.error('Auto-populate game error:', err);
+    res.status(500).json({ error: 'Failed to auto-populate game content' });
+  }
+});
+
 // ==================== USER STATS ENDPOINT ====================
 
 app.get('/api/stats', verifyToken, (req, res) => {
