@@ -92,8 +92,8 @@ body {
   border-top: 1px solid var(--border);
   padding: 0px 20px 24px 20px;
   box-shadow: none;
-  overflow-y: auto;
-  max-height: calc(100vh - 80px);
+  overflow-y: visible;
+  min-height: auto;
   width: 100%;
   margin: 0;
 }

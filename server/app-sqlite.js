@@ -586,7 +586,7 @@ app.post('/api/posts', verifyToken, (req, res) => {
 
     io.emit('newPost', post);
 
-    res.status(201).json({ id: postId, success: true });
+    res.status(201).json({ id: postId, success: true, post });
   } catch (err) {
     console.error('Create post error:', err);
     res.status(500).json({ message: 'Error creating post' });

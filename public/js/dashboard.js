@@ -2175,8 +2175,9 @@ async function createPost() {
             });
         }
 
-        const body = { content, caption };
-        if (imageData) body.imageData = imageData;
+        const imageAlt = document.getElementById('postImageAlt') ? document.getElementById('postImageAlt').value.trim() : '';
+        const body = { content, caption, imageAlt };
+        if (imageData) body.image = imageData;
 
         const response = await fetch(url, {
             method: method,
@@ -2194,15 +2195,11 @@ async function createPost() {
             document.getElementById('postContent').value = '';
             if (document.getElementById('postCaption')) document.getElementById('postCaption').value = '';
             if (document.getElementById('postImage')) document.getElementById('postImage').value = '';
+            if (document.getElementById('postImageAlt')) document.getElementById('postImageAlt').value = '';
             document.getElementById('postEditId').value = '';
             document.getElementById('postSubmitBtn').textContent = 'Post';
             document.getElementById('newPostForm').classList.add('hidden');
-            // If server returned the created post, prepend it so image shows immediately
-            if (!editId && data.post) {
-                prependPost(data.post);
-            } else {
-                loadPosts();
-            }
+            loadPosts();
         } else {
             showToast(data.error || 'Failed to save post', 'error');
         }
