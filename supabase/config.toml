@@ -1,0 +1,26 @@
+project_id = "seoaftyquktxpidwgzyt"
+
+[api]
+enabled = true
+port = 54321
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.notify-new-message]
+verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.generate-game-questions]
+verify_jwt = false
+
+[functions.get-game-capabilities]
+verify_jwt = false
+ 
+ [functions.bible-chat]
+ verify_jwt = false

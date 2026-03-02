@@ -1,0 +1,35 @@
+name: Generate Daily Bible Story
+
+# Run daily at midnight UTC
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  
+  # Allow manual triggering from GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  generate-story:
+    name: Generate daily story
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate daily Bible story
+        run: |
+          curl -X POST \
+            ${{ secrets.SUPABASE_URL }}/functions/v1/generate-daily-story \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            -i
+
+      - name: Report status
+        if: always()
+        run: |
+          # This is a placeholder for additional monitoring/alerting
+          echo "Daily story generation completed"
+          echo "Check Supabase Function Logs for details"

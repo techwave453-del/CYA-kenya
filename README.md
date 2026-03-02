@@ -1,230 +1,73 @@
-# 🎮 Secure Web Game - Login & Earn Platform
+# Welcome to your Lovable project
 
-A secure web game application with encrypted user authentication and reward-based gameplay system.
+## Project info
 
-**Developed by:** dennie-softs
+**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
-## Features
+## How can I edit this code?
 
-✅ **Secure User Authentication**
-- Login and Sign-up functionality
-- Password hashing with bcryptjs
-- JWT token-based sessions
+There are several ways of editing your application.
 
-✅ **Encrypted Data Storage**
-- User data encrypted with AES-256-CBC
-- All player statistics stored securely in JSON files
-- No plain-text data storage
+**Use Lovable**
 
-✅ **Reward System**
-- Earn 50 credits per game win
-- Lose 10 credits per game loss
-- Starting balance: 100 credits
-- Real-time balance updates
+Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
 
-✅ **Game Statistics**
-- Total games played
-- Win/loss records
-- Win rate percentage
-- Daily game tracking
+Changes made via Lovable will be committed automatically to this repo.
 
-## Project Structure
+**Use your preferred IDE**
 
-```
-CYA-kenya/
-├── server/
-│   └── app-sqlite.js         # Express server with authentication
-├── public/
-│   ├── index.html            # Main UI
-│   ├── css/
-│   │   └── style.css         # Styling
-│   └── js/
-│       └── app.js            # Frontend logic
-├── data/
-│   └── cya.db                # SQLite database
-└── package.json              # Dependencies
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
 ```
 
-## Installation & Setup
+**Edit a file directly in GitHub**
 
-### Prerequisites
-- Node.js (v12 or higher)
-- npm (Node Package Manager)
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-### Steps
+**Use GitHub Codespaces**
 
-1. **Navigate to project directory:**
-```bash
-cd CYA-kenya
-```
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-2. **Install dependencies:**
-```bash
-npm install
-```
+## What technologies are used for this project?
 
-3. **Start the server:**
-```bash
-npm start
-```
+This project is built with:
 
-4. **Open in browser:**
-```
-http://localhost:5000
-```
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-### Creating a System Admin
+## How can I deploy this project?
 
-To create a system admin user, run the following script:
+Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
-```bash
-node server/create-system-admin.js
-```
+## Can I connect a custom domain to my Lovable project?
 
-This will create a user with username `admin` and password `admin123`. You can log in with these credentials.
+Yes, you can!
 
-Alternatively, generate a registration code for system admin:
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-```bash
-node server/add-system-admin-code.js
-```
-
-Then use the generated code during signup to create a system admin account.
-
-## API Endpoints
-
-### Authentication
-
-**POST /api/signup**
-```json
-{
-  "username": "user123",
-  "password": "securepass123"
-}
-```
-
-**POST /api/login**
-```json
-{
-  "username": "user123",
-  "password": "securepass123"
-}
-```
-
-### Game Operations
-
-**GET /api/stats**
-- Headers: `Authorization: Bearer <token>`
-- Returns: User statistics
-
-**POST /api/play-game**
-- Headers: `Authorization: Bearer <token>`
-- Body: `{ "result": "win" or "loss" }`
-- Returns: Updated statistics and reward info
-
-## Security Features
-
-🔒 **Password Security**
-- Passwords hashed with bcrypt (10 salt rounds)
-- Never stored in plain text
-
-🔐 **Data Encryption**
-- User statistics encrypted with AES-256-CBC
-- Encryption key derived from secure salt
-- Random IV for each encryption
-
-🛡️ **Token Management**
-- JWT tokens with 24-hour expiration
-- Token verification on protected routes
-- Secure token generation
-
-📁 **File Security**
-- Encrypted JSON storage
-- Data persisted securely
-- Access control via authentication
-
-## How to Play
-
-1. **Create Account** - Sign up with username and password
-2. **Login** - Access your account with stored credentials
-3. **Play** - Click "PLAY GAME" button to spin for win/loss
-4. **Earn** - Win games to accumulate credits
-5. **Track** - View your statistics and progress
-
-## Game Mechanics
-
-- **Win Probability:** 50%
-- **Win Reward:** +50 credits
-- **Loss Penalty:** -10 credits
-- **Starting Balance:** 100 credits
-- **Minimum Balance:** 0 (can't go negative)
-
-## User Data Storage
-
-All user information is stored in encrypted JSON format:
-
-```
-users.json
-├── username
-│   ├── password (hashed)
-│   ├── stats (encrypted)
-│   │   ├── totalGamesPlayed
-│   │   ├── totalWins
-│   │   ├── totalLosses
-│   │   ├── balance
-│   │   ├── gamesWonToday
-│   │   └── joinDate
-│   └── createdAt
-```
-
-## Technology Stack
-
-- **Backend:** Node.js + Express.js
-- **Frontend:** HTML5 + CSS3 + Vanilla JavaScript
-- **Encryption:** Node.js crypto module (AES-256-CBC)
-- **Authentication:** JWT + bcryptjs
-- **Database:** Encrypted JSON files
-
-## Configuration
-
-**Server Settings (server/app.js)**
-- PORT: 5000
-- SECRET_KEY: 'dennie-softs-secure-key-2025'
-- ENCRYPTION_KEY: Derived from secure salt
-
-**Token Expiration**
-- 24 hours
-
-## Development Notes
-
-- Server runs on `http://localhost:3000`
-- All API routes are prefixed with `/api/`
-- Protected routes require valid JWT token
-- Data automatically persists to `data/users.json`
-- Front-end uses localStorage for token management
-
-## Error Handling
-
-- Invalid credentials return appropriate error messages
-- Protected routes verify token before processing
-- All errors logged to console
-- User-friendly error messages in UI
-
-## License
-
-MIT License - Created by dennie-softs
-
-## Support
-
-For issues or questions, contact the development team.
-
----
-
-**Note:** This is a demonstration project. For production use, implement:
-- HTTPS encryption
-- Rate limiting
-- Input validation
-- Database encryption at rest
-- Payment gateway integration
-- Audit logging
-# CYA-kenya
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
